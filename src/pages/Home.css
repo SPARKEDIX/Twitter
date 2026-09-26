@@ -1,0 +1,80 @@
+.home {
+  min-height: 100vh;
+  background: var(--color-surface-base, #000000);
+}
+
+.main {
+  margin-top: 56px;
+  min-height: calc(100vh - 56px);
+  transition: margin-left var(--motion-duration-instant, 200ms) ease;
+}
+
+.main__header {
+  position: sticky;
+  top: 56px;
+  z-index: 80;
+  padding: var(--space-4, 12px) var(--space-5, 16px);
+  background: var(--color-surface-base, #000000);
+  border-bottom: 1px solid var(--color-border-strong, #4b4e52);
+}
+
+.main__title {
+  margin: 0;
+  font-family: var(--font-family-primary, serif);
+  font-size: var(--font-size-2xl, 20px);
+  font-weight: 800;
+  color: var(--color-text-primary, #e7e9ea);
+}
+
+.main__content {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 var(--space-5, 16px);
+}
+
+.tweets-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.tweets-list__empty {
+  padding: var(--space-8, 32px) var(--space-5, 16px);
+  text-align: center;
+  color: var(--color-text-tertiary, #71767b);
+  font-family: var(--font-family-primary, serif);
+  font-size: var(--font-size-md, 13.33px);
+}
+
+.tweets-list__loading {
+  padding: var(--space-5, 16px);
+  text-align: center;
+  color: var(--color-text-tertiary, #71767b);
+  font-family: var(--font-family-primary, serif);
+  font-size: var(--font-size-md, 13.33px);
+}
+
+@media (max-width: 1024px) {
+  .main {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .main__header {
+    padding: var(--space-3, 8px);
+  }
+
+  .main__content {
+    padding: 0 var(--space-3, 8px);
+  }
+
+  .main__title {
+    font-size: var(--font-size-xl, 15px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main {
+    transition: none;
+  }
+}

@@ -1,0 +1,205 @@
+.tweet-composer {
+  padding: var(--space-5, 16px);
+  border-bottom: 1px solid var(--color-border-strong, #4b4e52);
+  background: var(--color-surface-base, #000000);
+}
+
+.tweet-composer__header {
+  display: flex;
+  gap: var(--space-3, 8px);
+  margin-bottom: var(--space-3, 8px);
+}
+
+.tweet-composer__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.tweet-composer__input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.tweet-composer__textarea {
+  width: 100%;
+  min-height: 52px;
+  max-height: 200px;
+  padding: var(--space-3, 8px) 0;
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary, #e7e9ea);
+  font-family: var(--font-family-primary, serif);
+  font-size: var(--font-size-xl, 15px);
+  font-weight: var(--font-weight-base, 400);
+  line-height: var(--font-line-height-base, normal);
+  resize: none;
+  outline: none;
+  overflow: hidden;
+}
+
+.tweet-composer__textarea::placeholder {
+  color: var(--color-text-tertiary, #71767b);
+}
+
+.tweet-composer__char-count {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1, 2px);
+  font-family: var(--font-family-primary, serif);
+  font-size: var(--font-size-sm, 13px);
+  color: var(--color-text-tertiary, #71767b);
+}
+
+.tweet-composer__char-count--over {
+  color: #f4212e;
+}
+
+.tweet-composer__preview {
+  position: relative;
+  border-radius: var(--radius-xs, 16px);
+  overflow: hidden;
+  margin-bottom: var(--space-3, 8px);
+}
+
+.tweet-composer__preview-img {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+.tweet-composer__remove-btn {
+  position: absolute;
+  top: var(--space-2, 4px);
+  right: var(--space-2, 4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
+  color: var(--color-text-primary, #e7e9ea);
+  cursor: pointer;
+  transition: background-color var(--motion-duration-instant, 200ms) ease;
+}
+
+.tweet-composer__remove-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.tweet-composer__remove-btn:focus-visible {
+  outline: 2px solid var(--color-text-inverse, #1d9bf0);
+  outline-offset: 2px;
+}
+
+.tweet-composer__remove-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.tweet-composer__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-3, 8px);
+}
+
+.tweet-composer__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 4px);
+}
+
+.tweet-composer__tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--color-text-inverse, #1d9bf0);
+  cursor: pointer;
+  transition: background-color var(--motion-duration-instant, 200ms) ease;
+}
+
+.tweet-composer__tool-btn:hover {
+  background: rgba(29, 155, 240, 0.1);
+}
+
+.tweet-composer__tool-btn:focus-visible {
+  outline: 2px solid var(--color-text-inverse, #1d9bf0);
+  outline-offset: 2px;
+}
+
+.tweet-composer__tool-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.tweet-composer__file-input {
+  display: none;
+}
+
+.tweet-composer__post-btn {
+  padding: var(--space-2, 4px) var(--space-6, 20px);
+  background: var(--color-text-inverse, #1d9bf0);
+  color: var(--color-surface-base, #000000);
+  border: none;
+  border-radius: var(--radius-sm, 9999px);
+  font-family: var(--font-family-primary, serif);
+  font-size: var(--font-size-md, 13.33px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--motion-duration-instant, 200ms) ease, opacity var(--motion-duration-instant, 200ms) ease;
+}
+
+.tweet-composer__post-btn:hover:not(:disabled) {
+  background: #0c8de6;
+}
+
+.tweet-composer__post-btn:focus-visible {
+  outline: 2px solid var(--color-text-inverse, #1d9bf0);
+  outline-offset: 2px;
+}
+
+.tweet-composer__post-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .tweet-composer {
+    padding: var(--space-4, 12px);
+  }
+
+  .tweet-composer__avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .tweet-composer__textarea {
+    font-size: var(--font-size-lg, 14px);
+  }
+
+  .tweet-composer__post-btn {
+    padding: var(--space-2, 4px) var(--space-5, 16px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tweet-composer__remove-btn,
+  .tweet-composer__tool-btn,
+  .tweet-composer__post-btn {
+    transition: none;
+  }
+}
