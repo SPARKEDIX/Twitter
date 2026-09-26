@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useLayoutEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { fetchTweetsStart, fetchTweetsSuccess } from '../store/tweetsSlice';
 import { hidePreloader } from '../store/uiSlice';
@@ -15,6 +15,14 @@ const Home = () => {
   const tweets = useAppSelector((state) => state.tweets.tweets);
   const loading = useAppSelector((state) => state.tweets.loading);
   const sidebarOpen = useAppSelector((state) => state.ui.sidebarOpen);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useLayoutEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -33,7 +41,7 @@ const Home = () => {
       <Preloader />
       <Sidebar />
       <Header />
-      <main className="main" role="main" style={{ marginLeft: sidebarOpen ? '280px' : '0' }}>
+      <main className={`main ${!isMobile && sidebarOpen ? 'main--sidebar-open' : ''}`} role="main">
         <div className="main__header">
           <h1 className="main__title">Home</h1>
         </div>

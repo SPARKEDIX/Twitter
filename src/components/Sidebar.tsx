@@ -74,50 +74,60 @@ const Sidebar = () => {
   const sidebarOpen = useAppSelector((state) => state.ui.sidebarOpen);
   const location = useLocation();
 
-  if (!sidebarOpen) return null;
+  const handleNavClick = () => {
+    if (window.innerWidth < 768) {
+      dispatch(toggleSidebar());
+    }
+  };
 
   return (
-    <aside className="sidebar" role="navigation" aria-label="Main navigation">
-      <nav className="sidebar__nav" aria-label="Primary">
-        <ul className="sidebar__list" role="list">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
-            return (
-              <li key={item.path} className="sidebar__item">
-                <NavLink
-                  to={item.path}
-                  className={`sidebar__link ${isActive ? 'sidebar__link--active' : ''}`}
-                  aria-current={isActive ? 'page' : undefined}
-                  onClick={() => window.innerWidth < 768 && dispatch(toggleSidebar())}
-                >
-                  <Icon className="sidebar__icon" aria-hidden="true" />
-                  <span className="sidebar__label">{item.label}</span>
-                </NavLink>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-      <div className="sidebar__bottom">
-        <button className="sidebar__tweet-btn" aria-label="Create new post">
-          <FeatherIcon className="sidebar__tweet-icon" aria-hidden="true" />
-          <span className="sidebar__tweet-text">Post</span>
-        </button>
-        <div className="sidebar__user">
-          <img
-            src="https://via.placeholder.com/40"
-            alt=""
-            className="sidebar__avatar"
-            aria-hidden="true"
-          />
-          <div className="sidebar__user-info">
-            <span className="sidebar__user-name">Your Name</span>
-            <span className="sidebar__user-handle">@username</span>
+    <>
+      {/* Mobile backdrop */}
+      {window.innerWidth < 768 && sidebarOpen && (
+        <div className="sidebar__backdrop" onClick={() => dispatch(toggleSidebar())} aria-hidden="true" />
+      )}
+      <aside className={`sidebar ${sidebarOpen ? 'sidebar--open' : ''}`} role="navigation" aria-label="Main navigation">
+        <nav className="sidebar__nav" aria-label="Primary">
+          <ul className="sidebar__list" role="list">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+              return (
+                <li key={item.path} className="sidebar__item">
+                  <NavLink
+                    to={item.path}
+                    className={`sidebar__link ${isActive ? 'sidebar__link--active' : ''}`}
+                    aria-current={isActive ? 'page' : undefined}
+                    onClick={handleNavClick}
+                  >
+                    <Icon className="sidebar__icon" aria-hidden="true" />
+                    <span className="sidebar__label">{item.label}</span>
+                  </NavLink>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+        <div className="sidebar__bottom">
+          <button className="sidebar__tweet-btn" aria-label="Create new post" onClick={handleNavClick}>
+            <FeatherIcon className="sidebar__tweet-icon" aria-hidden="true" />
+            <span className="sidebar__tweet-text">Post</span>
+          </button>
+          <div className="sidebar__user">
+            <img
+              src="https://via.placeholder.com/40"
+              alt=""
+              className="sidebar__avatar"
+              aria-hidden="true"
+            />
+            <div className="sidebar__user-info">
+              <span className="sidebar__user-name">Your Name</span>
+              <span className="sidebar__user-handle">@username</span>
+            </div>
           </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 };
 

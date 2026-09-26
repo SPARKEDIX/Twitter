@@ -9,6 +9,10 @@
   transition: margin-left var(--motion-duration-instant, 200ms) ease;
 }
 
+.main--sidebar-open {
+  margin-left: 280px;
+}
+
 .main__header {
   position: sticky;
   top: 56px;
@@ -54,7 +58,7 @@
 }
 
 @media (max-width: 1024px) {
-  .main {
+  .main--sidebar-open {
     margin-left: 0;
   }
 }
