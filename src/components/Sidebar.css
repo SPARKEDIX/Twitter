@@ -179,6 +179,7 @@
   text-overflow: ellipsis;
 }
 
+/* Mobile styles */
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
@@ -201,6 +202,17 @@
   .sidebar__tweet-btn {
     padding: var(--space-5, 16px);
     font-size: var(--font-size-lg, 14px);
+  }
+}
+
+/* Desktop styles - sidebar always visible */
+@media (min-width: 769px) {
+  .sidebar {
+    transform: translateX(0) !important;
+  }
+  
+  .sidebar__backdrop {
+    display: none !important;
   }
 }
 

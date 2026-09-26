@@ -1,4 +1,4 @@
-import { useEffect, useState, useLayoutEffect } from 'react';
+import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { fetchTweetsStart, fetchTweetsSuccess } from '../store/tweetsSlice';
 import { hidePreloader } from '../store/uiSlice';
@@ -8,21 +8,14 @@ import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Preloader from '../components/Preloader';
 import { mockTweets } from '../utils/mockData';
+import { useMobile } from '../hooks/useMobile';
 import './Home.css';
 
 const Home = () => {
   const dispatch = useAppDispatch();
   const tweets = useAppSelector((state) => state.tweets.tweets);
   const loading = useAppSelector((state) => state.tweets.loading);
-  const sidebarOpen = useAppSelector((state) => state.ui.sidebarOpen);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useLayoutEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const isMobile = useMobile();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -41,7 +34,7 @@ const Home = () => {
       <Preloader />
       <Sidebar />
       <Header />
-      <main className={`main ${!isMobile && sidebarOpen ? 'main--sidebar-open' : ''}`} role="main">
+      <main className={`main ${isMobile ? 'main--mobile' : ''}`} role="main">
         <div className="main__header">
           <h1 className="main__title">Home</h1>
         </div>

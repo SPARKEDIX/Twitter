@@ -1,6 +1,7 @@
 import { useAppSelector, useAppDispatch } from '../hooks/useRedux';
 import { toggleSidebar } from '../store/uiSlice';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useMobile } from '../hooks/useMobile';
 import './Sidebar.css';
 
 // SVG Icons - defined before use
@@ -73,9 +74,10 @@ const Sidebar = () => {
   const dispatch = useAppDispatch();
   const sidebarOpen = useAppSelector((state) => state.ui.sidebarOpen);
   const location = useLocation();
+  const isMobile = useMobile();
 
   const handleNavClick = () => {
-    if (window.innerWidth < 768) {
+    if (isMobile) {
       dispatch(toggleSidebar());
     }
   };
@@ -83,7 +85,7 @@ const Sidebar = () => {
   return (
     <>
       {/* Mobile backdrop */}
-      {window.innerWidth < 768 && sidebarOpen && (
+      {isMobile && sidebarOpen && (
         <div className="sidebar__backdrop" onClick={() => dispatch(toggleSidebar())} aria-hidden="true" />
       )}
       <aside className={`sidebar ${sidebarOpen ? 'sidebar--open' : ''}`} role="navigation" aria-label="Main navigation">

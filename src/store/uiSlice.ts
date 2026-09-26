@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { UIState } from '../types';
 
 const initialState: UIState = {
-  sidebarOpen: true,
+  sidebarOpen: false,
   preloaderVisible: true,
   theme: 'dark',
   notifications: [],
