@@ -7,6 +7,7 @@ import Follow from './pages/Follow';
 import Notifications from './pages/Notifications';
 import Chat from './pages/Chat';
 import Profile from './pages/Profile';
+import Login from './pages/Login';
 import Preloader from './components/Preloader';
 import { registerSW } from './utils/registerSW';
 import './App.css';
@@ -21,6 +22,7 @@ const App = () => {
         <Preloader />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/follow" element={<Follow />} />
           <Route path="/notifications" element={<Notifications />} />
