@@ -7,7 +7,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      // vite-plugin-pwa injects the manifest link and its own
+      // registerSW.js for us. Declaring `injectRegister: 'auto'` (the
+      // default) alongside a manual navigator.serviceWorker.register()
+      // in the app produced two registrations and two <link rel=manifest>.
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'Twitter Clone',
         short_name: 'Twitter',

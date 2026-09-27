@@ -10,7 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Twitter" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- The <link rel="manifest"> is injected by vite-plugin-pwa at build
+         time. Declaring it here as well produced a duplicate tag. -->
     <title>Twitter</title>
   </head>
   <body>

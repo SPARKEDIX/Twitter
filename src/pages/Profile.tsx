@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
-import { hidePreloader } from '../store/uiSlice';
+import { useAppSelector } from '../hooks/useRedux';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Tweet from '../components/Tweet';
@@ -11,72 +9,71 @@ import {
   mockProfileTweets,
   mockProfileMedia,
   mockProfileLikes,
+  mockProfileDirectory,
 } from '../utils/mockData';
 import { formatCount, formatDate } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
+import type { LikedTweet, ProfileUser, ProfileTweet } from '../types';
 import './Profile.css';
 
+type ProfileTab = 'posts' | 'replies' | 'media' | 'likes';
+
+const VALID_TABS: ProfileTab[] = ['posts', 'replies', 'media', 'likes'];
+
 const Profile = () => {
-  useParams<{ username: string }>();
+  const { username } = useParams<{ username: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const dispatch = useAppDispatch();
   const currentUser = useAppSelector((state) => state.auth.user);
   const isMobile = useMobile();
-  const [activeTab, setActiveTab] = useState<'posts' | 'replies' | 'media' | 'likes'>('posts');
 
-  // Sync tab with URL
-  useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab && ['posts', 'replies', 'media', 'likes'].includes(tab)) {
-      setActiveTab(tab as typeof activeTab);
-    }
-  }, [searchParams]);
+  // Derived from the URL instead of mirrored into state via an effect.
+  // The old version only ever pushed state INTO the tab, so clearing
+  // ?tab= left the previous tab stuck on screen.
+  const tabParam = searchParams.get('tab');
+  const activeTab: ProfileTab = VALID_TABS.includes(tabParam as ProfileTab)
+    ? (tabParam as ProfileTab)
+    : 'posts';
 
-  const handleTabChange = (tab: typeof activeTab) => {
-    setActiveTab(tab);
-    setSearchParams({ tab }, { replace: true });
-  };
+  // Actually honour the :username segment. Previously the param was
+  // discarded and every profile rendered the same hardcoded mock user.
+  const profileUser: ProfileUser =
+    mockProfileDirectory.find((u) => u.username === username) ?? mockProfileUser;
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      dispatch(hidePreloader());
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [dispatch]);
-
-  // For demo, always use mockProfileUser regardless of username param
-  const profileUser = mockProfileUser;
   const isOwnProfile = currentUser?.username === profileUser.username;
 
-  const tabs = [
+  const handleTabChange = (tab: ProfileTab) => {
+    // Preserve any other query params instead of replacing the whole string.
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('tab', tab);
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
+  const replyCount = mockProfileTweets.filter((t) => t.isReply).length;
+
+  const tabs: { id: ProfileTab; label: string; count: number }[] = [
     { id: 'posts', label: 'Posts', count: profileUser.tweetsCount },
-    { id: 'replies', label: 'Replies', count: mockProfileTweets.filter(t => t.isReply).length },
+    { id: 'replies', label: 'Replies', count: replyCount },
     { id: 'media', label: 'Media', count: profileUser.mediaCount },
     { id: 'likes', label: 'Likes', count: profileUser.likesCount },
   ];
 
-  const getContentForTab = () => {
-    switch (activeTab) {
-      case 'posts':
-        return mockProfileTweets.filter(t => !t.isReply);
-      case 'replies':
-        return mockProfileTweets.filter(t => t.isReply);
-      case 'media':
-        return mockProfileTweets.filter(t => t.images && t.images.length > 0);
-      case 'likes':
-        return mockProfileLikes;
-      default:
-        return mockProfileTweets;
-    }
-  };
+  const postTweets: ProfileTweet[] = mockProfileTweets.filter((t) => !t.isReply);
+  const replyTweets: ProfileTweet[] = mockProfileTweets.filter((t) => t.isReply);
+  const mediaTweets: ProfileTweet[] = mockProfileTweets.filter((t) => t.images && t.images.length > 0);
 
-  const content = getContentForTab();
+  const tabTweets: ProfileTweet[] =
+    activeTab === 'replies' ? replyTweets : activeTab === 'media' ? mediaTweets : postTweets;
 
   return (
     <div className="profile">
       <Sidebar />
       <Header />
-      <main className={`main ${isMobile ? 'main--mobile' : ''}`} role="main">
+      <main className={`main ${isMobile ? 'main--mobile' : ''}`}>
         <div className="profile__banner" style={{ backgroundImage: `url(${profileUser.banner})` }} aria-hidden="true">
           <div className="profile__banner-gradient" />
         </div>
@@ -155,7 +152,7 @@ const Profile = () => {
               aria-controls={`${tab.id}-panel`}
               id={`${tab.id}-tab`}
               className={`profile__tab ${activeTab === tab.id ? 'profile__tab--active' : ''}`}
-              onClick={() => handleTabChange(tab.id as typeof activeTab)}
+              onClick={() => handleTabChange(tab.id)}
             >
               {tab.label}
               {tab.count > 0 && (
@@ -191,40 +188,32 @@ const Profile = () => {
                 )}
               </div>
             ) : activeTab === 'likes' ? (
-              <div className="profile__likes-list" role="list" aria-label="Liked posts">
+              <ul className="profile__likes-list" aria-label="Liked posts">
                 {mockProfileLikes.map((tweet) => (
-                  <ProfileLikeItem key={tweet.id} tweet={tweet} />
+                  <li key={tweet.id} role="listitem">
+                    <ProfileLikeItem tweet={tweet} />
+                  </li>
                 ))}
                 {mockProfileLikes.length === 0 && (
-                  <div className="profile__empty">
+                  <li className="profile__empty">
                     <HeartIcon className="profile__empty-icon" aria-hidden="true" />
                     <p>No likes yet</p>
-                  </div>
+                  </li>
                 )}
-              </div>
+              </ul>
             ) : (
               <div className="profile__tweets-list" role="feed" aria-label={`${activeTab} posts`}>
-                {content.length === 0 ? (
+                {activeTab === 'posts' && isOwnProfile && <TweetComposer />}
+                {tabTweets.length === 0 ? (
                   <div className="profile__empty">
                     <PostIcon className="profile__empty-icon" aria-hidden="true" />
-                    <p>
-                      {activeTab === 'posts'
-                        ? 'No posts yet'
-                        : activeTab === 'replies'
-                        ? 'No replies yet'
-                        : 'No posts yet'}
-                    </p>
+                    <p>{activeTab === 'replies' ? 'No replies yet' : 'No posts yet'}</p>
                     {activeTab === 'posts' && isOwnProfile && (
                       <p className="profile__empty-subtext">Post something to get started!</p>
                     )}
                   </div>
                 ) : (
-                  <>
-                    {activeTab === 'posts' && isOwnProfile && <TweetComposer />}
-                    {content.map((tweet) => (
-                      <Tweet key={tweet.id} tweet={tweet} />
-                    ))}
-                  </>
+                  tabTweets.map((tweet) => <Tweet key={tweet.id} tweet={tweet} />)
                 )}
               </div>
             )}
@@ -285,21 +274,7 @@ const PostIcon = ({ className }: { className?: string }) => (
 );
 
 interface ProfileLikeItemProps {
-  tweet: {
-    id: string;
-    author: {
-      id: string;
-      username: string;
-      displayName: string;
-      avatar: string;
-      verified: boolean;
-    };
-    content: string;
-    createdAt: string;
-    likesCount: number;
-    retweetsCount: number;
-    repliesCount: number;
-  };
+  tweet: LikedTweet;
 }
 
 const ProfileLikeItem = ({ tweet }: ProfileLikeItemProps) => (

@@ -1,27 +1,23 @@
-import { useState, useEffect } from 'react';
-import { useAppDispatch } from '../hooks/useRedux';
-import { hidePreloader } from '../store/uiSlice';
+import { useState, useMemo, type MouseEvent } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { mockFollowSuggestions, mockRecommendedUsers } from '../utils/mockData';
 import { formatCount } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
+import type { FollowSuggestion, SuggestedUser } from '../types';
 import './Follow.css';
 
+type FollowTab = 'suggested' | 'following' | 'followers';
+
 const Follow = () => {
-  const dispatch = useAppDispatch();
   const isMobile = useMobile();
-  const [activeTab, setActiveTab] = useState<'suggested' | 'following' | 'followers'>('suggested');
+  const [activeTab, setActiveTab] = useState<FollowTab>('suggested');
   const [searchQuery, setSearchQuery] = useState('');
+  // Lifted from FollowUserItem's local useState. Per-item state was wiped
+  // every time the user switched tabs or the list re-filtered.
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      dispatch(hidePreloader());
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [dispatch]);
-
-  const tabs = [
+  const tabs: { id: FollowTab; label: string }[] = [
     { id: 'suggested', label: 'Suggested' },
     { id: 'following', label: 'Following' },
     { id: 'followers', label: 'Followers' },
@@ -31,31 +27,41 @@ const Follow = () => {
   const followingUsers = mockFollowSuggestions.slice(0, 5);
   const followersUsers = mockRecommendedUsers;
 
-  const getUsersForTab = () => {
+  const getUsersForTab = (): (FollowSuggestion | SuggestedUser)[] => {
     switch (activeTab) {
-      case 'suggested':
-        return suggestedUsers;
       case 'following':
         return followingUsers;
       case 'followers':
         return followersUsers;
+      case 'suggested':
       default:
         return suggestedUsers;
     }
   };
 
-  const users = getUsersForTab();
-  const filteredUsers = users.filter(
-    (user) =>
-      user.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return getUsersForTab().filter(
+      (user) =>
+        user.displayName.toLowerCase().includes(q) || user.username.toLowerCase().includes(q)
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, searchQuery]);
+
+  const toggleFollow = (userId: string) => {
+    setFollowingIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  };
 
   return (
     <div className="follow">
       <Sidebar />
       <Header />
-      <main className={`main ${isMobile ? 'main--mobile' : ''}`} role="main">
+      <main className={`main ${isMobile ? 'main--mobile' : ''}`}>
         <div className="main__header">
           <div className="follow__header-content">
             <h1 className="follow__title">Follow</h1>
@@ -82,7 +88,7 @@ const Follow = () => {
                 aria-controls={`${tab.id}-panel`}
                 id={`${tab.id}-tab`}
                 className={`follow__tab ${activeTab === tab.id ? 'follow__tab--active' : ''}`}
-                onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                onClick={() => setActiveTab(tab.id)}
               >
                 {tab.label}
                 {tab.id === 'suggested' && suggestedUsers.length > 0 && (
@@ -100,21 +106,24 @@ const Follow = () => {
                   {searchQuery
                     ? `No users found for "${searchQuery}"`
                     : activeTab === 'suggested'
-                    ? 'No suggestions at the moment'
-                    : `No ${activeTab} yet`}
+                      ? 'No suggestions at the moment'
+                      : `No ${activeTab} yet`}
                 </p>
               </div>
             ) : (
-              <div className="follow__users-list" role="list" aria-label={`${activeTab} users`}>
+              <ul className="follow__users-list" aria-label={`${activeTab} users`}>
                 {filteredUsers.map((user) => (
-                  <FollowUserItem
-                    key={user.id}
-                    user={user}
-                    showFollowButton={activeTab === 'suggested'}
-                    showMutualFollowers={activeTab === 'suggested'}
-                  />
+                  <li key={user.id} role="listitem">
+                    <FollowUserItem
+                      user={user}
+                      isFollowing={followingIds.has(user.id)}
+                      onToggleFollow={() => toggleFollow(user.id)}
+                      showFollowButton={activeTab === 'suggested'}
+                      showMutualFollowers={activeTab === 'suggested'}
+                    />
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </div>
         </div>
@@ -136,40 +145,31 @@ const SearchOffIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-interface FollowUser {
-  id: string;
-  username: string;
-  displayName: string;
-  avatar: string;
-  verified: boolean;
-  bio: string;
-  followersCount: number;
-  followingCount?: number;
-  mutualFollowers?: string[];
-  reason?: string;
-}
-
 interface FollowUserItemProps {
-  user: FollowUser;
+  user: FollowSuggestion | SuggestedUser;
+  isFollowing: boolean;
+  onToggleFollow: () => void;
   showFollowButton?: boolean;
   showMutualFollowers?: boolean;
 }
 
 const FollowUserItem = ({
   user,
+  isFollowing,
+  onToggleFollow,
   showFollowButton = true,
   showMutualFollowers = false,
 }: FollowUserItemProps) => {
-  const [following, setFollowing] = useState(false);
+  const suggestion = user as Partial<FollowSuggestion>;
 
-  const handleFollow = (e: React.MouseEvent) => {
+  const handleFollow = (e: MouseEvent) => {
     e.stopPropagation();
-    setFollowing(!following);
+    onToggleFollow();
   };
 
   return (
-    <div className="follow__user-item" role="listitem">
-      <img src={user.avatar} alt="" className="follow__user-avatar" aria-hidden="true" />
+    <div className="follow__user-item">
+      <img src={user.avatar} alt="" className="follow__user-avatar" />
       <div className="follow__user-info">
         <div className="follow__user-name-row">
           <span className="follow__user-display-name">{user.displayName}</span>
@@ -178,17 +178,21 @@ const FollowUserItem = ({
         </div>
         <p className="follow__user-bio">{user.bio}</p>
         <div className="follow__user-meta">
-          {showMutualFollowers && user.reason && (
-            <span className="follow__user-reason">{user.reason}</span>
+          {/* showMutualFollowers used to gate `user.reason`, so the actual
+              mutualFollowers data was declared but never rendered. */}
+          {showMutualFollowers && suggestion.mutualFollowers && suggestion.mutualFollowers.length > 0 && (
+            <span className="follow__user-reason">
+              Followed by {suggestion.mutualFollowers.slice(0, 2).join(', ')}
+            </span>
           )}
           <span className="follow__user-followers">
             {formatCount(user.followersCount)} followers
           </span>
-          {user.followingCount !== undefined && (
+          {suggestion.followingCount !== undefined && (
             <>
               <span className="follow__user-separator" aria-hidden="true">·</span>
               <span className="follow__user-following">
-                {formatCount(user.followingCount)} following
+                {formatCount(suggestion.followingCount)} following
               </span>
             </>
           )}
@@ -196,12 +200,13 @@ const FollowUserItem = ({
       </div>
       {showFollowButton && (
         <button
-          className={`follow__follow-btn ${following ? 'follow__follow-btn--following' : ''}`}
+          type="button"
+          className={`follow__follow-btn ${isFollowing ? 'follow__follow-btn--following' : ''}`}
           onClick={handleFollow}
-          aria-label={following ? `Unfollow ${user.displayName}` : `Follow ${user.displayName}`}
-          aria-pressed={following}
+          aria-label={isFollowing ? `Unfollow ${user.displayName}` : `Follow ${user.displayName}`}
+          aria-pressed={isFollowing}
         >
-          {following ? 'Following' : 'Follow'}
+          {isFollowing ? 'Following' : 'Follow'}
         </button>
       )}
     </div>

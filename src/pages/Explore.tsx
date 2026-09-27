@@ -1,25 +1,24 @@
-import { useState, useEffect } from 'react';
-import { useAppDispatch } from '../hooks/useRedux';
-import { hidePreloader } from '../store/uiSlice';
+import { useState, useMemo } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { mockTrendingTopics, mockCategories, mockRecommendedUsers } from '../utils/mockData';
 import { formatCount } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
+import type { CategoryTopic, SuggestedUser, TrendingTopic } from '../types';
 import './Explore.css';
 
+const CATEGORY_TABS = ['news', 'sports', 'entertainment'] as const;
+type CategoryTab = (typeof CATEGORY_TABS)[number];
+
 const Explore = () => {
-  const dispatch = useAppDispatch();
   const isMobile = useMobile();
   const [activeTab, setActiveTab] = useState('for-you');
-  const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      dispatch(hidePreloader());
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [dispatch]);
+  // Seeded from ?q= so the header search actually lands somewhere useful.
+  const [initialQuery] = useState(
+    () => new URLSearchParams(window.location.search).get('q') ?? ''
+  );
+  const [query, setQuery] = useState(initialQuery);
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
   const tabs = [
     { id: 'for-you', label: 'For you' },
@@ -29,11 +28,42 @@ const Explore = () => {
     { id: 'entertainment', label: 'Entertainment' },
   ];
 
+  // Record<string, CategoryTopic[]> made TS treat every lookup as defined,
+  // so the old `?.` was dead and a missing key would have crashed.
+  const categoryTopics: CategoryTopic[] = CATEGORY_TABS.includes(activeTab as CategoryTab)
+    ? mockCategories[activeTab] ?? []
+    : [];
+
+  const filteredTopics = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return mockTrendingTopics;
+    return mockTrendingTopics.filter(
+      (t) => t.topic.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)
+    );
+  }, [query]);
+
+  const filteredUsers = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return mockRecommendedUsers;
+    return mockRecommendedUsers.filter(
+      (u) => u.displayName.toLowerCase().includes(q) || u.username.toLowerCase().includes(q)
+    );
+  }, [query]);
+
+  const toggleFollow = (userId: string) => {
+    setFollowingIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  };
+
   return (
     <div className="explore">
       <Sidebar />
       <Header />
-      <main className={`main ${isMobile ? 'main--mobile' : ''}`} role="main">
+      <main className={`main ${isMobile ? 'main--mobile' : ''}`}>
         <div className="main__header">
           <div className="explore__search" role="search">
             <SearchIcon className="explore__search-icon" aria-hidden="true" />
@@ -41,10 +71,9 @@ const Explore = () => {
               type="search"
               className="explore__search-input"
               placeholder="Search on X"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               aria-label="Search on X"
-              autoFocus
             />
           </div>
         </div>
@@ -71,11 +100,18 @@ const Explore = () => {
                 <div className="explore__section-header">
                   <h2 className="explore__section-title">Trending now</h2>
                 </div>
-                <div className="explore__trending-list" role="list" aria-label="Trending topics">
-                  {mockTrendingTopics.map((topic, index) => (
-                    <TrendingItem key={topic.id} topic={topic} rank={index + 1} />
+                <ul className="explore__trending-list" aria-label="Trending topics">
+                  {filteredTopics.map((topic, index) => (
+                    <li key={topic.id} role="listitem">
+                      <TrendingItem topic={topic} rank={index + 1} />
+                    </li>
                   ))}
-                </div>
+                  {filteredTopics.length === 0 && (
+                    <li className="explore__empty">
+                      <p>No trending topics match &quot;{query}&quot;</p>
+                    </li>
+                  )}
+                </ul>
               </div>
             )}
 
@@ -84,26 +120,35 @@ const Explore = () => {
                 <div className="explore__section-header">
                   <h2 className="explore__section-title">Trending topics</h2>
                 </div>
-                <div className="explore__trending-list" role="list" aria-label="All trending topics">
-                  {mockTrendingTopics.map((topic, index) => (
-                    <TrendingItem key={topic.id} topic={topic} rank={index + 1} />
+                <ul className="explore__trending-list" aria-label="All trending topics">
+                  {filteredTopics.map((topic, index) => (
+                    <li key={topic.id} role="listitem">
+                      <TrendingItem topic={topic} rank={index + 1} />
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             )}
 
-            {['news', 'sports', 'entertainment'].includes(activeTab) && (
+            {CATEGORY_TABS.includes(activeTab as CategoryTab) && (
               <div className="explore__section">
                 <div className="explore__section-header">
                   <h2 className="explore__section-title">
                     {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                   </h2>
                 </div>
-                <div className="explore__category-topics" role="list" aria-label={`${activeTab} topics`}>
-                  {mockCategories[activeTab]?.map((topic) => (
-                    <CategoryTopicItem key={topic.id} topic={topic} />
+                <ul className="explore__category-topics" aria-label={`${activeTab} topics`}>
+                  {categoryTopics.map((topic) => (
+                    <li key={topic.id} role="listitem">
+                      <CategoryTopicItem topic={topic} />
+                    </li>
                   ))}
-                </div>
+                  {categoryTopics.length === 0 && (
+                    <li className="explore__empty">
+                      <p>No topics in this category yet</p>
+                    </li>
+                  )}
+                </ul>
               </div>
             )}
 
@@ -111,11 +156,22 @@ const Explore = () => {
               <div className="explore__section-header">
                 <h2 className="explore__section-title">Who to follow</h2>
               </div>
-              <div className="explore__users-list" role="list" aria-label="Recommended users">
-                {mockRecommendedUsers.map((user) => (
-                  <RecommendedUserItem key={user.id} user={user} />
+              <ul className="explore__users-list" aria-label="Recommended users">
+                {filteredUsers.map((user) => (
+                  <li key={user.id} role="listitem">
+                    <RecommendedUserItem
+                      user={user}
+                      isFollowing={followingIds.has(user.id)}
+                      onToggleFollow={() => toggleFollow(user.id)}
+                    />
+                  </li>
                 ))}
-              </div>
+                {filteredUsers.length === 0 && (
+                  <li className="explore__empty">
+                    <p>No people match &quot;{query}&quot;</p>
+                  </li>
+                )}
+              </ul>
             </div>
           </div>
         </div>
@@ -130,21 +186,13 @@ const SearchIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-interface TrendingTopic {
-  id: string;
-  topic: string;
-  description: string;
-  tweetCount: number;
-  category?: string;
-}
-
 interface TrendingItemProps {
   topic: TrendingTopic;
   rank: number;
 }
 
 const TrendingItem = ({ topic, rank }: TrendingItemProps) => (
-  <div className="explore__trending-item" role="listitem">
+  <div className="explore__trending-item">
     <span className="explore__trending-rank" aria-hidden="true">{rank}</span>
     <div className="explore__trending-content">
       <div className="explore__trending-topic">
@@ -157,19 +205,12 @@ const TrendingItem = ({ topic, rank }: TrendingItemProps) => (
   </div>
 );
 
-interface CategoryTopic {
-  id: string;
-  name: string;
-  description: string;
-  tweetCount: number;
-}
-
 interface CategoryTopicItemProps {
   topic: CategoryTopic;
 }
 
 const CategoryTopicItem = ({ topic }: CategoryTopicItemProps) => (
-  <button className="explore__category-item" role="listitem" aria-label={`${topic.name}: ${topic.description}`}>
+  <button type="button" className="explore__category-item" aria-label={`${topic.name}: ${topic.description}`}>
     <div className="explore__category-item-info">
       <h3 className="explore__category-item-name">{topic.name}</h3>
       <p className="explore__category-item-description">{topic.description}</p>
@@ -178,23 +219,15 @@ const CategoryTopicItem = ({ topic }: CategoryTopicItemProps) => (
   </button>
 );
 
-interface User {
-  id: string;
-  username: string;
-  displayName: string;
-  avatar: string;
-  verified: boolean;
-  bio: string;
-  followersCount: number;
-}
-
 interface RecommendedUserItemProps {
-  user: User;
+  user: SuggestedUser;
+  isFollowing: boolean;
+  onToggleFollow: () => void;
 }
 
-const RecommendedUserItem = ({ user }: RecommendedUserItemProps) => (
-  <div className="explore__user-item" role="listitem">
-    <img src={user.avatar} alt="" className="explore__user-avatar" aria-hidden="true" />
+const RecommendedUserItem = ({ user, isFollowing, onToggleFollow }: RecommendedUserItemProps) => (
+  <div className="explore__user-item">
+    <img src={user.avatar} alt="" className="explore__user-avatar" />
     <div className="explore__user-info">
       <div className="explore__user-name-row">
         <span className="explore__user-display-name">{user.displayName}</span>
@@ -204,8 +237,15 @@ const RecommendedUserItem = ({ user }: RecommendedUserItemProps) => (
       <p className="explore__user-bio">{user.bio}</p>
       <span className="explore__user-followers">{formatCount(user.followersCount)} followers</span>
     </div>
-    <button className="explore__follow-btn" aria-label={`Follow ${user.displayName}`}>
-      Follow
+    {/* The Follow button previously had no handler at all. */}
+    <button
+      type="button"
+      className={`explore__follow-btn ${isFollowing ? 'explore__follow-btn--following' : ''}`}
+      onClick={onToggleFollow}
+      aria-label={isFollowing ? `Unfollow ${user.displayName}` : `Follow ${user.displayName}`}
+      aria-pressed={isFollowing}
+    >
+      {isFollowing ? 'Following' : 'Follow'}
     </button>
   </div>
 );

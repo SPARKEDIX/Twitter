@@ -1,55 +1,57 @@
-import { useState, useEffect } from 'react';
-import { useAppDispatch } from '../hooks/useRedux';
-import { hidePreloader, markNotificationRead, clearNotifications } from '../store/uiSlice';
+import { useState, useMemo, type ReactElement, type ReactNode } from 'react';
+import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
+import { markRead, markAllRead, clearAll } from '../store/activitySlice';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { mockNotifications } from '../utils/mockData';
 import { formatDate } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
+import type { ActivityType, Notification } from '../types';
 import './Notifications.css';
+
+type Filter = 'all' | 'mentions' | 'verified';
 
 const Notifications = () => {
   const dispatch = useAppDispatch();
   const isMobile = useMobile();
-  const [activeFilter, setActiveFilter] = useState<'all' | 'mentions' | 'verified'>('all');
+  // Read from Redux (seeded from the same mock data) instead of the static
+  // array, so "mark as read" and "clear all" actually change what renders.
+  const notifications = useAppSelector((state) => state.activity.items);
+  const [activeFilter, setActiveFilter] = useState<Filter>('all');
   const [showOnlyUnread, setShowOnlyUnread] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      dispatch(hidePreloader());
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [dispatch]);
-
-  const filters = [
+  const filters: { id: Filter; label: string }[] = [
     { id: 'all', label: 'All' },
     { id: 'mentions', label: 'Mentions' },
     { id: 'verified', label: 'Verified' },
   ];
 
-  let displayNotifications = [...mockNotifications];
+  const displayNotifications = useMemo(() => {
+    let result = notifications;
 
-  if (activeFilter === 'mentions') {
-    displayNotifications = displayNotifications.filter((n) => n.type === 'mention' || n.type === 'reply');
-  } else if (activeFilter === 'verified') {
-    displayNotifications = displayNotifications.filter((n) => n.actor.verified);
-  }
+    if (activeFilter === 'mentions') {
+      result = result.filter((n) => n.type === 'mention' || n.type === 'reply');
+    } else if (activeFilter === 'verified') {
+      result = result.filter((n) => n.actor.verified);
+    }
 
-  if (showOnlyUnread) {
-    displayNotifications = displayNotifications.filter((n) => !n.read);
-  }
+    if (showOnlyUnread) {
+      result = result.filter((n) => !n.read);
+    }
 
-  const unreadCount = mockNotifications.filter((n) => !n.read).length;
+    return result;
+  }, [notifications, activeFilter, showOnlyUnread]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleMarkRead = (id: string) => {
-    dispatch(markNotificationRead(id));
+    dispatch(markRead(id));
   };
 
   const handleClearAll = () => {
-    dispatch(clearNotifications());
+    dispatch(clearAll());
   };
 
-  const getNotificationIcon = (type: Notification['type']) => {
+  const getNotificationIcon = (type: ActivityType): ReactElement => {
     switch (type) {
       case 'like':
         return <LikeIcon className="notification__icon notification__icon--like" aria-hidden="true" />;
@@ -67,7 +69,7 @@ const Notifications = () => {
     }
   };
 
-  const getNotificationText = (notification: typeof mockNotifications[0]) => {
+  const getNotificationText = (notification: Notification) => {
     const { actor, type } = notification;
     const actorName = actor.displayName;
     const actorHandle = `@${actor.username}`;
@@ -118,7 +120,7 @@ const Notifications = () => {
     <div className="notifications">
       <Sidebar />
       <Header />
-      <main className={`main ${isMobile ? 'main--mobile' : ''}`} role="main">
+      <main className={`main ${isMobile ? 'main--mobile' : ''}`}>
         <div className="main__header">
           <div className="notifications__header-content">
             <h1 className="notifications__title">
@@ -136,17 +138,25 @@ const Notifications = () => {
                   checked={showOnlyUnread}
                   onChange={(e) => setShowOnlyUnread(e.target.checked)}
                   className="notifications__filter-checkbox"
-                  aria-label="Show only unread"
                 />
                 <span className="notifications__filter-label">Unread only</span>
               </label>
               {unreadCount > 0 && (
                 <button
                   className="notifications__clear-btn"
-                  onClick={handleClearAll}
+                  onClick={() => dispatch(markAllRead())}
                   aria-label="Mark all as read"
                 >
                   Mark all read
+                </button>
+              )}
+              {notifications.length > 0 && (
+                <button
+                  className="notifications__clear-btn"
+                  onClick={handleClearAll}
+                  aria-label="Clear all notifications"
+                >
+                  Clear all
                 </button>
               )}
             </div>
@@ -162,7 +172,7 @@ const Notifications = () => {
                 aria-controls={`${filter.id}-panel`}
                 id={`${filter.id}-tab`}
                 className={`notifications__filter ${activeFilter === filter.id ? 'notifications__filter--active' : ''}`}
-                onClick={() => setActiveFilter(filter.id as typeof activeFilter)}
+                onClick={() => setActiveFilter(filter.id)}
               >
                 {filter.label}
               </button>
@@ -187,7 +197,7 @@ const Notifications = () => {
                 </p>
               </div>
             ) : (
-              <div className="notifications__list" role="list" aria-label="Notifications">
+              <ul className="notifications__list" aria-label="Notifications">
                 {displayNotifications.map((notification) => (
                   <NotificationItem
                     key={notification.id}
@@ -197,7 +207,7 @@ const Notifications = () => {
                     getText={getNotificationText}
                   />
                 ))}
-              </div>
+              </ul>
             )}
           </div>
         </div>
@@ -248,33 +258,11 @@ const QuoteIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-interface Notification {
-  id: string;
-  type: 'like' | 'retweet' | 'reply' | 'follow' | 'mention' | 'quote';
-  actor: {
-    id: string;
-    username: string;
-    displayName: string;
-    avatar: string;
-    verified: boolean;
-  };
-  tweet?: {
-    id: string;
-    content: string;
-    author: {
-      username: string;
-      displayName: string;
-    };
-  };
-  createdAt: string;
-  read: boolean;
-}
-
 interface NotificationItemProps {
   notification: Notification;
   onMarkRead: (id: string) => void;
-  getIcon: (type: Notification['type']) => React.ReactElement;
-  getText: (notification: Notification) => React.ReactNode;
+  getIcon: (type: ActivityType) => ReactElement;
+  getText: (notification: Notification) => ReactNode;
 }
 
 const NotificationItem = ({
@@ -285,50 +273,56 @@ const NotificationItem = ({
 }: NotificationItemProps) => {
   const isUnread = !notification.read;
 
+  const markRead = () => {
+    if (!notification.read) onMarkRead(notification.id);
+  };
+
   return (
-    <div
-      className={`notification ${isUnread ? 'notification--unread' : ''}`}
-      role="listitem"
-      onClick={() => !notification.read && onMarkRead(notification.id)}
-    >
-      <img
-        src={notification.actor.avatar}
-        alt=""
-        className="notification__avatar"
-        aria-hidden="true"
-      />
-      <div className="notification__content">
-        <div className="notification__header">
-          <div className="notification__icon-wrapper">
-            {getIcon(notification.type)}
-          </div>
-          <div className="notification__text">{getText(notification)}</div>
-        </div>
-        {notification.tweet && (
-          <div className="notification__tweet-preview">
-            <span className="notification__tweet-author">
-              @{notification.tweet.author.username}
-            </span>
-            <span className="notification__tweet-content">
-              {notification.tweet.content}
-            </span>
-          </div>
-        )}
-        <time className="notification__timestamp" dateTime={notification.createdAt}>
-          {formatDate(notification.createdAt)}
-        </time>
-      </div>
-      {isUnread && (
-        <div
-          className="notification__unread-indicator"
-          aria-hidden="true"
-          onClick={(e) => {
-            e.stopPropagation();
-            onMarkRead(notification.id);
-          }}
+    // The <li> keeps the list semantics; the inner <button> provides real
+    // keyboard/AT support that a bare onClick div never had.
+    <li className="notification__item" role="listitem">
+      <button
+        type="button"
+        className={`notification ${isUnread ? 'notification--unread' : ''}`}
+        onClick={markRead}
+        aria-pressed={isUnread}
+        aria-label={
+          isUnread
+            ? `Mark notification from ${notification.actor.displayName} as read`
+            : `Notification from ${notification.actor.displayName}`
+        }
+      >
+        <img
+          src={notification.actor.avatar}
+          alt=""
+          className="notification__avatar"
         />
-      )}
-    </div>
+        <div className="notification__content">
+          <div className="notification__header">
+            <div className="notification__icon-wrapper">
+              {getIcon(notification.type)}
+            </div>
+            <div className="notification__text">{getText(notification)}</div>
+          </div>
+          {notification.tweet && (
+            <div className="notification__tweet-preview">
+              <span className="notification__tweet-author">
+                @{notification.tweet.author.username}
+              </span>
+              <span className="notification__tweet-content">
+                {notification.tweet.content}
+              </span>
+            </div>
+          )}
+          <time className="notification__timestamp" dateTime={notification.createdAt}>
+            {formatDate(notification.createdAt)}
+          </time>
+        </div>
+        {isUnread && (
+          <span className="notification__unread-indicator" aria-hidden="true" />
+        )}
+      </button>
+    </li>
   );
 };
 

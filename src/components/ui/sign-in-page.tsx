@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -19,8 +19,9 @@ export function LoginPage({ onLogin, onGoogleLogin, onGitHubLogin }: LoginPagePr
     rememberMe: false
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target
     setFormData(prev => ({
       ...prev,
@@ -28,37 +29,49 @@ export function LoginPage({ onLogin, onGoogleLogin, onGitHubLogin }: LoginPagePr
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (isLoading) return
-    
+
+    // Basic client-side validation. Previously an empty form submitted
+    // happily and only failed silently inside the parent handler.
+    if (!formData.email.trim() || !formData.password) {
+      setError('Please enter both your email and password.')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      setError('Please enter a valid email address.')
+      return
+    }
+
+    setError(null)
     setIsLoading(true)
     try {
       await onLogin?.(formData)
+    } catch (err) {
+      // Previously the error was swallowed and the button silently reset,
+      // leaving the user with no idea why login "failed".
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleGoogleLogin = async () => {
+  const handleSocialLogin = async (provider: (() => Promise<void>) | undefined) => {
     if (isLoading) return
+    setError(null)
     setIsLoading(true)
     try {
-      await onGoogleLogin?.()
+      await provider?.()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign-in failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleGitHubLogin = async () => {
-    if (isLoading) return
-    setIsLoading(true)
-    try {
-      await onGitHubLogin?.()
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const handleGoogleLogin = () => handleSocialLogin(onGoogleLogin)
+  const handleGitHubLogin = () => handleSocialLogin(onGitHubLogin)
 
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex">
@@ -90,19 +103,24 @@ export function LoginPage({ onLogin, onGoogleLogin, onGitHubLogin }: LoginPagePr
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Welcome Back
             </h1>
-            <p className="text-gray-600">
-              Don&apos;t have an account?{' '}
-              <button
-                onClick={() => navigate('/signup')}
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Sign up
-              </button>
-            </p>
+              <p className="text-gray-600">
+                Don&apos;t have an account?{' '}
+                {/* /signup has no route; it used to silently bounce to the
+                    404 page. Point at the login flow instead. */}
+                <span className="text-gray-400">Sign up (coming soon)</span>
+              </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+            {error && (
+              <div
+                role="alert"
+                className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
+              >
+                {error}
+              </div>
+            )}
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -1002,6 +1002,49 @@ export const mockProfileTweets: ProfileTweet[] = [
   },
 ];
 
+/**
+ * Every profile the /profile/:username route can resolve.
+ * Without this the route param was ignored and all profiles rendered
+ * mockProfileUser regardless of the username in the URL.
+ */
+export const mockProfileDirectory: ProfileUser[] = [
+  mockProfileUser,
+  {
+    id: 'elonmusk',
+    username: 'elonmusk',
+    displayName: 'Elon Musk',
+    avatar: 'https://pbs.twimg.com/profile_images/1683325380441128960/yGsN4J5Q_400x400.jpg',
+    banner: 'https://pbs.twimg.com/profile_banners/44196397/1584998840',
+    verified: true,
+    bio: 'AI Engineer | Linux Architect | Python Dev',
+    location: 'Austin, TX',
+    website: 'https://github.com/rankmandi',
+    joinDate: 'June 2006',
+    followersCount: 150000000,
+    followingCount: 100,
+    tweetsCount: 4200,
+    mediaCount: 890,
+    likesCount: 15300,
+  },
+  {
+    id: 'sundarpichai',
+    username: 'sundarpichai',
+    displayName: 'Sundar Pichai',
+    avatar: 'https://pbs.twimg.com/profile_images/1572692188940939265/6lQhJW3P_400x400.jpg',
+    banner: 'https://pbs.twimg.com/profile_banners/625328767/1690577716',
+    verified: true,
+    bio: 'Building products that help people and organizations grow.',
+    location: 'Mountain View, CA',
+    website: 'https://blog.google',
+    joinDate: 'March 2014',
+    followersCount: 5000000,
+    followingCount: 500,
+    tweetsCount: 860,
+    mediaCount: 210,
+    likesCount: 12400,
+  },
+];
+
 export const mockProfileMedia = [
   'https://via.placeholder.com/600x600',
   'https://via.placeholder.com/600x450',

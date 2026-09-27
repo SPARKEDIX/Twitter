@@ -1,48 +1,66 @@
+import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { likeTweet, retweet, bookmarkTweet } from '../store/tweetsSlice';
-import { formatDate, formatCount } from '../utils/helpers';
+import { addNotification } from '../store/uiSlice';
+import { formatDate, formatCount, classNames } from '../utils/helpers';
+import type { Tweet as TweetModel } from '../types';
 import './Tweet.css';
 
 interface TweetProps {
-  tweet: {
-    id: string;
-    author: {
-      id: string;
-      username: string;
-      displayName: string;
-      avatar: string;
-      verified: boolean;
-    };
-    content: string;
-    images?: string[];
-    createdAt: string;
-    likesCount: number;
-    retweetsCount: number;
-    repliesCount: number;
-    isLiked: boolean;
-    isRetweeted: boolean;
-    isBookmarked: boolean;
-  };
+  tweet: TweetModel;
 }
 
 const Tweet = ({ tweet }: TweetProps) => {
   const dispatch = useAppDispatch();
   const currentUser = useAppSelector((state) => state.auth.user);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // These previously did nothing when signed out - the click was swallowed
+  // with no feedback at all.
+  const requireAuth = (): boolean => {
+    if (currentUser) return true;
+    dispatch(addNotification({ type: 'error', message: 'Please log in to continue' }));
+    return false;
+  };
 
   const handleLike = () => {
-    if (currentUser) {
-      dispatch(likeTweet({ tweetId: tweet.id, userId: currentUser.id }));
+    if (requireAuth()) {
+      dispatch(likeTweet({ tweetId: tweet.id, userId: currentUser!.id }));
     }
   };
 
   const handleRetweet = () => {
-    if (currentUser) {
-      dispatch(retweet({ tweetId: tweet.id, userId: currentUser.id }));
+    if (requireAuth()) {
+      dispatch(retweet({ tweetId: tweet.id, userId: currentUser!.id }));
     }
   };
 
   const handleBookmark = () => {
-    dispatch(bookmarkTweet(tweet.id));
+    if (requireAuth()) {
+      dispatch(bookmarkTweet(tweet.id));
+    }
+  };
+
+  const handleReply = () => {
+    if (!requireAuth()) return;
+    // Replies are not modelled yet, so surface that instead of a dead click.
+    dispatch(
+      addNotification({ type: 'info', message: 'Replies are not available in this demo yet.' })
+    );
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/profile/${tweet.author.username}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ text: tweet.content, url: shareUrl });
+        return;
+      }
+      await navigator.clipboard.writeText(`${tweet.content} ${shareUrl}`);
+      dispatch(addNotification({ type: 'success', message: 'Link copied to clipboard' }));
+    } catch {
+      // User cancelled the share sheet - nothing to report.
+    }
   };
 
   return (
@@ -52,7 +70,6 @@ const Tweet = ({ tweet }: TweetProps) => {
           src={tweet.author.avatar}
           alt=""
           className="tweet__avatar"
-          aria-hidden="true"
         />
         <div className="tweet__author">
           <div className="tweet__author-name">
@@ -66,10 +83,52 @@ const Tweet = ({ tweet }: TweetProps) => {
             {formatDate(tweet.createdAt)}
           </time>
         </div>
-        <button className="tweet__menu-btn" aria-label="More options">
+        <button
+          className="tweet__menu-btn"
+          aria-label="More options"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((v) => !v)}
+        >
           <MoreIcon className="tweet__menu-icon" aria-hidden="true" />
         </button>
       </div>
+      {menuOpen && (
+        <div className="tweet__menu" role="menu">
+          <button
+            type="button"
+            role="menuitem"
+            className="tweet__menu-item"
+            onClick={() => {
+              navigator.clipboard
+                ?.writeText(tweet.content)
+                .then(() => dispatch(addNotification({ type: 'success', message: 'Copied to clipboard' })))
+                .catch(() => undefined);
+              setMenuOpen(false);
+            }}
+          >
+            Copy text
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="tweet__menu-item"
+            onClick={() => {
+              if (requireAuth()) {
+                dispatch(bookmarkTweet(tweet.id));
+                dispatch(
+                  addNotification({
+                    type: 'success',
+                    message: tweet.isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks',
+                  })
+                );
+              }
+              setMenuOpen(false);
+            }}
+          >
+            {tweet.isBookmarked ? 'Remove bookmark' : 'Bookmark'}
+          </button>
+        </div>
+      )}
       <div className="tweet__content">
         <p className="tweet__text">{tweet.content}</p>
         {tweet.images && tweet.images.length > 0 && (
@@ -88,15 +147,19 @@ const Tweet = ({ tweet }: TweetProps) => {
       </div>
       <div className="tweet__actions" role="group" aria-label="Tweet actions">
         <button
-          className={`tweet__action-btn ${tweet.repliesCount > 0 ? 'tweet__action-btn--active' : ''}`}
-          onClick={() => {}}
+          className={classNames('tweet__action-btn', tweet.repliesCount > 0 && 'tweet__action-btn--active')}
+          onClick={handleReply}
           aria-label={`Replies: ${formatCount(tweet.repliesCount)}`}
         >
           <ChatIcon className="tweet__action-icon" aria-hidden="true" />
           <span className="tweet__action-count">{formatCount(tweet.repliesCount)}</span>
         </button>
         <button
-          className={`tweet__action-btn ${tweet.isRetweeted ? 'tweet__action-btn--active tweet__action-btn--retweeted' : ''}`}
+          className={classNames(
+            'tweet__action-btn',
+            tweet.isRetweeted && 'tweet__action-btn--active',
+            tweet.isRetweeted && 'tweet__action-btn--retweeted'
+          )}
           onClick={handleRetweet}
           aria-label={`Retweets: ${formatCount(tweet.retweetsCount)}`}
           aria-pressed={tweet.isRetweeted}
@@ -105,7 +168,11 @@ const Tweet = ({ tweet }: TweetProps) => {
           <span className="tweet__action-count">{formatCount(tweet.retweetsCount)}</span>
         </button>
         <button
-          className={`tweet__action-btn ${tweet.isLiked ? 'tweet__action-btn--active tweet__action-btn--liked' : ''}`}
+          className={classNames(
+            'tweet__action-btn',
+            tweet.isLiked && 'tweet__action-btn--active',
+            tweet.isLiked && 'tweet__action-btn--liked'
+          )}
           onClick={handleLike}
           aria-label={`Likes: ${formatCount(tweet.likesCount)}`}
           aria-pressed={tweet.isLiked}
@@ -114,14 +181,18 @@ const Tweet = ({ tweet }: TweetProps) => {
           <span className="tweet__action-count">{formatCount(tweet.likesCount)}</span>
         </button>
         <button
-          className={`tweet__action-btn ${tweet.isBookmarked ? 'tweet__action-btn--active tweet__action-btn--bookmarked' : ''}`}
+          className={classNames(
+            'tweet__action-btn',
+            tweet.isBookmarked && 'tweet__action-btn--active',
+            tweet.isBookmarked && 'tweet__action-btn--bookmarked'
+          )}
           onClick={handleBookmark}
           aria-label={tweet.isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
           aria-pressed={tweet.isBookmarked}
         >
           <BookmarkIcon className="tweet__action-icon" aria-hidden="true" />
         </button>
-        <button className="tweet__action-btn" aria-label="Share">
+        <button className="tweet__action-btn" onClick={handleShare} aria-label="Share">
           <ShareIcon className="tweet__action-icon" aria-hidden="true" />
         </button>
       </div>

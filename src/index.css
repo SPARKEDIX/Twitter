@@ -55,6 +55,48 @@
   }
 }
 
+/*
+ * Light theme is driven by an explicit `data-theme` attribute written by
+ * useThemeSync, not only by `prefers-color-scheme`. Previously the theme
+ * lived in Redux but was never written to the DOM, so the header's
+ * sun/moon button changed nothing on screen.
+ */
+[data-theme='light'] {
+  color-scheme: light;
+
+  --color-text-primary: #0f1419;
+  --color-text-secondary: #008ec2;
+  --color-text-tertiary: #536471;
+  --color-text-inverse: #1d9bf0;
+  --color-surface-base: #ffffff;
+  --color-surface-muted: #eff3f4;
+  --color-surface-raised: #ffffff;
+  --color-border-strong: #cfd9de;
+
+  --shadow-1: rgba(0, 0, 0, 0.08) 0px 0px 15px 0px;
+  --shadow-2: rgba(0, 0, 0, 0.1) 0px 1px 4px 1px;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* Fallback for the very first paint, before useThemeSync has run. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --color-text-primary: #0f1419;
+    --color-text-secondary: #008ec2;
+    --color-text-tertiary: #536471;
+    --color-surface-base: #ffffff;
+    --color-surface-raised: #ffffff;
+    --color-border-strong: #cfd9de;
+  }
+
+  :root:not([data-theme]) {
+    color-scheme: light;
+  }
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

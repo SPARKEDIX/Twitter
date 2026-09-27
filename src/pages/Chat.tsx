@@ -1,58 +1,72 @@
 import { useState, useEffect, useRef } from 'react';
-import { useAppDispatch } from '../hooks/useRedux';
-import { hidePreloader } from '../store/uiSlice';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { mockConversations, mockMessages, type Conversation, type Message } from '../utils/mockData';
-import { formatDate } from '../utils/helpers';
+import { mockConversations, mockMessages } from '../utils/mockData';
+import { formatDate, generateId } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
+import type { Conversation, Message } from '../types';
 import './Chat.css';
 
+const CURRENT_USER_ID = 'current-user';
+const MAX_MESSAGE_LENGTH = 10000;
+const MAX_TEXTAREA_HEIGHT = 150;
+
+/** Everything the component needs, in local state keyed by conversation id. */
+type MessagesByConversation = Record<string, Message[]>;
+
 const Chat = () => {
-  const dispatch = useAppDispatch();
   const isMobile = useMobile();
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [newMessage, setNewMessage] = useState('');
+  // Seeded from the mock data, then appended to locally so sending a
+  // message actually works instead of clearing the box and doing nothing.
+  const [sentMessages, setSentMessages] = useState<MessagesByConversation>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      dispatch(hidePreloader());
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [dispatch]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeConversationId, newMessage]);
+    // Scroll only the message pane. scrollIntoView() with no argument
+    // scrolls the whole window, which jumped the page on every send.
+    messagesEndRef.current?.scrollIntoView({ block: 'end' });
+  }, [activeConversationId, messagesEndRef.current?.childElementCount]);
 
   const filteredConversations = mockConversations.filter((conv) => {
-    const otherParticipant = conv.participants.find((p) => p.id !== 'current-user');
+    const otherParticipant = conv.participants.find((p) => p.id !== CURRENT_USER_ID);
     if (!otherParticipant) return true;
+    const q = searchQuery.toLowerCase();
     return (
-      otherParticipant.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      otherParticipant.username.toLowerCase().includes(searchQuery.toLowerCase())
+      otherParticipant.displayName.toLowerCase().includes(q) ||
+      otherParticipant.username.toLowerCase().includes(q) ||
+      // The input says "Search messages", so match message content too.
+      conv.lastMessage.content.toLowerCase().includes(q)
     );
   });
 
   const activeConversation = mockConversations.find((c) => c.id === activeConversationId);
-  const messages = activeConversationId ? mockMessages[activeConversationId] || [] : [];
+
+  const messages: Message[] = activeConversationId
+    ? [...(mockMessages[activeConversationId] ?? []), ...(sentMessages[activeConversationId] ?? [])]
+    : [];
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeConversationId) return;
+    const content = newMessage.trim();
+    if (!content || !activeConversationId) return;
 
-    // In a real app, this would dispatch to Redux or call an API
-    // const newMsg: Message = {
-    //   id: `msg-${Date.now()}`,
-    //   conversationId: activeConversationId,
-    //   senderId: 'current-user',
-    //   content: newMessage.trim(),
-    //   createdAt: new Date().toISOString(),
-    //   read: true,
-    // };
+    const message: Message = {
+      id: generateId(),
+      conversationId: activeConversationId,
+      senderId: CURRENT_USER_ID,
+      content,
+      createdAt: new Date().toISOString(),
+      read: true,
+    };
+
+    setSentMessages((prev) => ({
+      ...prev,
+      [activeConversationId]: [...(prev[activeConversationId] ?? []), message],
+    }));
 
     setNewMessage('');
     if (textareaRef.current) {
@@ -61,15 +75,15 @@ const Chat = () => {
   };
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNewMessage(e.target.value);
+    const value = e.target.value.slice(0, MAX_MESSAGE_LENGTH);
+    setNewMessage(value);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`;
     }
   };
 
   const startNewConversation = () => {
-    // In a real app, this would open a user search modal
     // For demo, select the first conversation
     if (mockConversations.length > 0) {
       setActiveConversationId(mockConversations[0].id);
@@ -80,7 +94,7 @@ const Chat = () => {
     <div className="chat">
       <Sidebar />
       <Header />
-      <main className={`main ${isMobile ? 'main--mobile' : ''}`} role="main">
+      <main className={`main ${isMobile ? 'main--mobile' : ''}`}>
         <div className="chat__layout">
           {/* Conversations List */}
           <aside className="chat__sidebar" role="complementary" aria-label="Conversations">
@@ -105,36 +119,33 @@ const Chat = () => {
                 aria-label="Search messages"
               />
             </div>
-            <div className="chat__conversations-list" role="list" aria-label="Conversations">
+            <ul className="chat__conversations-list" aria-label="Conversations">
               {filteredConversations.length === 0 ? (
-                <div className="chat__empty">
+                <li className="chat__empty">
                   <MessageOffIcon className="chat__empty-icon" aria-hidden="true" />
                   <p className="chat__empty-text">
-                    {searchQuery
-                      ? 'No conversations match your search'
-                      : 'No messages yet'}
+                    {searchQuery ? 'No conversations match your search' : 'No messages yet'}
                   </p>
                   <p className="chat__empty-subtext">
-                    {searchQuery
-                      ? 'Try a different search term'
-                      : 'Start a conversation with someone'}
+                    {searchQuery ? 'Try a different search term' : 'Start a conversation with someone'}
                   </p>
-                </div>
+                </li>
               ) : (
                 filteredConversations.map((conversation) => (
-                  <ConversationItem
-                    key={conversation.id}
-                    conversation={conversation}
-                    isActive={activeConversationId === conversation.id}
-                    onClick={() => setActiveConversationId(conversation.id)}
-                  />
+                  <li key={conversation.id} role="listitem">
+                    <ConversationItem
+                      conversation={conversation}
+                      isActive={activeConversationId === conversation.id}
+                      onClick={() => setActiveConversationId(conversation.id)}
+                    />
+                  </li>
                 ))
               )}
-            </div>
+            </ul>
           </aside>
 
-          {/* Chat Area */}
-          <div className="chat__main" role="main">
+          {/* Chat Area - no second role="main"; the outer <main> owns that. */}
+          <div className="chat__main">
             {activeConversation ? (
               <>
                 <ChatHeader conversation={activeConversation} />
@@ -144,14 +155,17 @@ const Chat = () => {
                       <p>No messages yet. Start the conversation!</p>
                     </div>
                   ) : (
-                    messages.map((message) => (
-                      <MessageItem
-                        key={message.id}
-                        message={message}
-                        isOwn={message.senderId === 'current-user'}
-                        conversation={activeConversation}
-                      />
-                    ))
+                    <ul className="chat__message-list">
+                      {messages.map((message) => (
+                        <li key={message.id} role="listitem">
+                          <MessageItem
+                            message={message}
+                            isOwn={message.senderId === CURRENT_USER_ID}
+                            conversation={activeConversation}
+                          />
+                        </li>
+                      ))}
+                    </ul>
                   )}
                   <div ref={messagesEndRef} />
                 </div>
@@ -160,7 +174,6 @@ const Chat = () => {
                   onChange={handleTextareaChange}
                   onSubmit={handleSendMessage}
                   textareaRef={textareaRef}
-                  disabled={!activeConversation}
                 />
               </>
             ) : (
@@ -222,23 +235,24 @@ interface ConversationItemProps {
 }
 
 const ConversationItem = ({ conversation, isActive, onClick }: ConversationItemProps) => {
-  const otherParticipant = conversation.participants.find((p) => p.id !== 'current-user') || conversation.participants[0];
+  const otherParticipant = conversation.participants.find((p) => p.id !== CURRENT_USER_ID) || conversation.participants[0];
   const lastMessage = conversation.lastMessage;
-  const isOwnMessage = lastMessage.senderId === 'current-user';
+  const isOwnMessage = lastMessage.senderId === CURRENT_USER_ID;
 
   return (
+    // role="listitem" on a <button> overrode the button role and broke
+    // keyboard/AT semantics. The parent <li> now carries that role.
     <button
+      type="button"
       className={`chat__conversation ${isActive ? 'chat__conversation--active' : ''}`}
       onClick={onClick}
-      role="listitem"
-      aria-selected={isActive}
+      aria-current={isActive ? 'true' : undefined}
       aria-label={`${otherParticipant.displayName}${conversation.unreadCount > 0 ? `, ${conversation.unreadCount} unread` : ''}`}
     >
       <img
         src={otherParticipant.avatar}
         alt=""
         className="chat__conversation-avatar"
-        aria-hidden="true"
       />
       {otherParticipant.verified && (
         <VerifiedBadge className="chat__conversation-verified" aria-label="Verified account" />
@@ -282,16 +296,15 @@ interface MessageItemProps {
 }
 
 const MessageItem = ({ message, isOwn, conversation }: MessageItemProps) => {
-  const otherParticipant = conversation.participants.find((p) => p.id !== 'current-user') || conversation.participants[0];
+  const otherParticipant = conversation.participants.find((p) => p.id !== CURRENT_USER_ID) || conversation.participants[0];
 
   return (
-    <div className={`chat__message ${isOwn ? 'chat__message--own' : ''}`} role="listitem">
+    <div className={`chat__message ${isOwn ? 'chat__message--own' : ''}`}>
       {!isOwn && (
         <img
           src={otherParticipant.avatar}
           alt=""
           className="chat__message-avatar"
-          aria-hidden="true"
         />
       )}
       <div className="chat__message-content">
@@ -323,17 +336,18 @@ interface ChatHeaderProps {
 }
 
 const ChatHeader = ({ conversation }: ChatHeaderProps) => {
-  const otherParticipant = conversation.participants.find((p) => p.id !== 'current-user') || conversation.participants[0];
+  const otherParticipant = conversation.participants.find((p) => p.id !== CURRENT_USER_ID) || conversation.participants[0];
   const isGroup = conversation.participants.length > 2;
 
   return (
-    <header className="chat__header" role="banner">
+    // The page-level <header> already owns role="banner"; a second one
+    // created a competing landmark.
+    <header className="chat__header">
       <div className="chat__header-avatar-wrapper">
         <img
           src={otherParticipant.avatar}
           alt=""
           className="chat__header-avatar"
-          aria-hidden="true"
         />
         {otherParticipant.verified && !isGroup && (
           <VerifiedBadge className="chat__header-verified" aria-label="Verified account" />
@@ -383,10 +397,9 @@ interface ChatInputProps {
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
-  disabled: boolean;
 }
 
-const ChatInput = ({ value, onChange, onSubmit, textareaRef, disabled }: ChatInputProps) => {
+const ChatInput = ({ value, onChange, onSubmit, textareaRef }: ChatInputProps) => {
   return (
     <form className="chat__input-form" onSubmit={onSubmit}>
       <div className="chat__input-wrapper">
@@ -394,7 +407,7 @@ const ChatInput = ({ value, onChange, onSubmit, textareaRef, disabled }: ChatInp
           type="button"
           className="chat__input-tool-btn"
           aria-label="Add image"
-          disabled={disabled}
+          disabled
         >
           <ImageIcon className="chat__input-tool-icon" aria-hidden="true" />
         </button>
@@ -402,26 +415,25 @@ const ChatInput = ({ value, onChange, onSubmit, textareaRef, disabled }: ChatInp
           type="button"
           className="chat__input-tool-btn"
           aria-label="Add GIF"
-          disabled={disabled}
+          disabled
         >
           <GifIcon className="chat__input-tool-icon" aria-hidden="true" />
         </button>
         <textarea
           ref={textareaRef}
           className="chat__input-textarea"
-          placeholder={disabled ? 'Select a conversation to start messaging' : 'Message'}
+          placeholder="Message"
           value={value}
           onChange={onChange}
-          disabled={disabled}
           rows={1}
-          maxLength={10000}
+          maxLength={MAX_MESSAGE_LENGTH}
           aria-label="Message"
         />
       </div>
       <button
         type="submit"
         className="chat__input-send-btn"
-        disabled={disabled || !value.trim()}
+        disabled={!value.trim()}
         aria-label="Send message"
       >
         <SendIcon className="chat__input-send-icon" aria-hidden="true" />

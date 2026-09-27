@@ -1,26 +1,46 @@
+import { useState, type FormEvent } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { toggleSidebar, toggleTheme } from '../store/uiSlice';
-import { NavLink } from 'react-router-dom';
+import { logout } from '../store/authSlice';
+import { mockUser } from '../utils/mockData';
+import { NavLink, useNavigate } from 'react-router-dom';
 import './Header.css';
 
 const Header = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const sidebarOpen = useAppSelector((state) => state.ui.sidebarOpen);
   const theme = useAppSelector((state) => state.ui.theme);
   const currentUser = useAppSelector((state) => state.auth.user);
+  const unreadCount = useAppSelector((state) => state.activity.items.filter((n) => !n.read).length);
+  const [query, setQuery] = useState('');
 
-  const getProfilePath = () => {
-    return currentUser ? `/profile/${currentUser.username}` : '/profile/rankmandi';
+  // Single source of truth. This was hardcoded as '/profile/rankmandi' in
+  // two places and never matched mockProfileUser.username.
+  const profilePath = `/profile/${currentUser?.username ?? mockUser.username}`;
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = query.trim();
+    navigate(trimmed ? `/explore?q=${encodeURIComponent(trimmed)}` : '/explore');
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login', { replace: true });
   };
 
   return (
-    <header className="header" role="banner">
+    // Each page renders its own <Header>, and the document already has an
+    // implicit banner landmark. role="banner" here created duplicates.
+    <header className="header">
       <div className="header__left">
         <button
           className="header__menu-btn"
           onClick={() => dispatch(toggleSidebar())}
           aria-label={sidebarOpen ? 'Close navigation menu' : 'Open navigation menu'}
           aria-expanded={sidebarOpen}
+          aria-controls="main-sidebar"
         >
           <MenuIcon className="header__icon" aria-hidden="true" />
         </button>
@@ -31,36 +51,58 @@ const Header = () => {
         </div>
       </div>
       <div className="header__center">
-        <div className="header__search" role="search">
+        {/* Was an uncontrolled input with no submit handler - typing did nothing. */}
+        <form className="header__search" role="search" onSubmit={handleSearch}>
           <SearchIcon className="header__search-icon" aria-hidden="true" />
           <input
             type="search"
             className="header__search-input"
             placeholder="Search on X"
             aria-label="Search on X"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
           />
-        </div>
+        </form>
       </div>
       <div className="header__right">
         <button
           className="header__icon-btn"
           onClick={() => dispatch(toggleTheme())}
           aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-pressed={theme === 'light'}
         >
           {theme === 'dark' ? <SunIcon className="header__icon" aria-hidden="true" /> : <MoonIcon className="header__icon" aria-hidden="true" />}
         </button>
-        <button className="header__icon-btn" aria-label="Open notifications">
+        <button
+          className="header__icon-btn header__icon-btn--badge"
+          onClick={() => navigate('/notifications')}
+          aria-label={
+            unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Open notifications'
+          }
+        >
           <BellIcon className="header__icon" aria-hidden="true" />
+          {unreadCount > 0 && <span className="header__badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
         </button>
-        <button className="header__icon-btn" aria-label="Open messages">
+        <button
+          className="header__icon-btn"
+          onClick={() => navigate('/messages')}
+          aria-label="Open messages"
+        >
           <EnvelopeIcon className="header__icon" aria-hidden="true" />
         </button>
-        <NavLink to={getProfilePath()} className="header__profile" aria-label="View profile">
+        <button
+          className="header__icon-btn"
+          onClick={handleLogout}
+          aria-label="Log out"
+          title="Log out"
+        >
+          <LogoutIcon className="header__icon" aria-hidden="true" />
+        </button>
+        <NavLink to={profilePath} className="header__profile" aria-label="View your profile">
           <img
-            src={currentUser?.avatar || "https://via.placeholder.com/32"}
+            src={currentUser?.avatar ?? mockUser.avatar}
             alt=""
             className="header__avatar"
-            aria-hidden="true"
           />
         </NavLink>
       </div>
@@ -101,6 +143,12 @@ const SunIcon = ({ className }: { className?: string }) => (
 const MoonIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor" width="24" height="24" aria-hidden="true">
     <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z" />
+  </svg>
+);
+
+const LogoutIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" width="24" height="24" aria-hidden="true">
+    <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
   </svg>
 );
 

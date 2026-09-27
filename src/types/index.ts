@@ -23,31 +23,123 @@ export interface Tweet {
   isBookmarked: boolean;
 }
 
-export interface AppState {
-  user: User | null;
-  tweets: Tweet[];
-  sidebarOpen: boolean;
-  theme: 'light' | 'dark';
-  loading: boolean;
-}
-
 export interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
   token: string | null;
 }
 
+/* ------------------------------------------------------------------ *
+ * App-level toasts (transient UI messages)
+ * Named `AppNotification` so it never collides with the domain-level
+ * `Notification` (likes / follows / mentions) further down.
+ * ------------------------------------------------------------------ */
+export type AppNotificationType = 'info' | 'success' | 'error' | 'warning';
+
+export interface AppNotification {
+  id: string;
+  type: AppNotificationType;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
 export interface UIState {
   sidebarOpen: boolean;
   preloaderVisible: boolean;
   theme: 'light' | 'dark';
-  notifications: Notification[];
+  notifications: AppNotification[];
 }
+
+/* ------------------------------------------------------------------ *
+ * Domain models (formerly duplicated across mockData / Explore / Follow)
+ * ------------------------------------------------------------------ */
+export interface TrendingTopic {
+  id: string;
+  topic: string;
+  description: string;
+  tweetCount: number;
+  category?: string;
+}
+
+export interface CategoryTopic {
+  id: string;
+  name: string;
+  description: string;
+  tweetCount: number;
+}
+
+export interface SuggestedUser {
+  id: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  verified: boolean;
+  bio: string;
+  followersCount: number;
+}
+
+export interface FollowSuggestion extends SuggestedUser {
+  followingCount: number;
+  mutualFollowers?: string[];
+  reason?: string;
+}
+
+export type ActivityType = 'like' | 'retweet' | 'reply' | 'follow' | 'mention' | 'quote';
 
 export interface Notification {
   id: string;
-  type: 'info' | 'success' | 'error' | 'warning';
-  message: string;
-  read: boolean;
+  type: ActivityType;
+  actor: Pick<User, 'id' | 'username' | 'displayName' | 'avatar' | 'verified'>;
+  tweet?: {
+    id: string;
+    content: string;
+    author: { username: string; displayName: string };
+  };
   createdAt: string;
+  read: boolean;
+}
+
+export interface Conversation {
+  id: string;
+  participants: Pick<User, 'id' | 'username' | 'displayName' | 'avatar' | 'verified'>[];
+  lastMessage: { content: string; senderId: string; createdAt: string };
+  unreadCount: number;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+  read: boolean;
+}
+
+export interface ProfileUser {
+  id: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  banner: string;
+  verified: boolean;
+  bio: string;
+  location: string;
+  website: string;
+  joinDate: string;
+  followersCount: number;
+  followingCount: number;
+  tweetsCount: number;
+  mediaCount: number;
+  likesCount: number;
+}
+
+export interface ProfileTweet extends Tweet {
+  isReply?: boolean;
+  replyTo?: { username: string; displayName: string };
+}
+
+/** Reduced shape used by the "Likes" tab, whose author has no counters. */
+export interface LikedTweet extends Omit<Tweet, 'author'> {
+  author: Pick<User, 'id' | 'username' | 'displayName' | 'avatar' | 'verified'>;
 }

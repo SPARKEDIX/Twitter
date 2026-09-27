@@ -2,10 +2,17 @@ import { useState, useRef, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { addTweet } from '../store/tweetsSlice';
 import { addNotification } from '../store/uiSlice';
+import { useNavigate } from 'react-router-dom';
+import type { Tweet } from '../types';
 import './TweetComposer.css';
+
+const MAX_CHARS = 280;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_TEXTAREA_HEIGHT = 200;
 
 const TweetComposer = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const currentUser = useAppSelector((state) => state.auth.user);
   const [content, setContent] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -13,77 +20,124 @@ const TweetComposer = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const charCount = content.length;
-  const isOverLimit = charCount > 280;
+  const isOverLimit = charCount > MAX_CHARS;
 
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`;
     }
   }, [content]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!content.trim() && !imageFile) return;
+  // Blob URLs are not garbage collected automatically. Revoke the preview
+  // URL when it is replaced or the component unmounts.
+  const previewUrlRef = useRef<string | null>(null);
+  useEffect(() => {
+    previewUrlRef.current = imagePreview;
+  }, [imagePreview]);
 
-    if (currentUser) {
-      const newTweet = {
-        id: Date.now().toString(),
-        author: currentUser,
-        content: content.trim(),
-        images: imageFile ? [URL.createObjectURL(imageFile)] : undefined,
-        createdAt: new Date().toISOString(),
-        likesCount: 0,
-        retweetsCount: 0,
-        repliesCount: 0,
-        isLiked: false,
-        isRetweeted: false,
-        isBookmarked: false,
-      };
-      dispatch(addTweet(newTweet));
-      dispatch(addNotification({ type: 'success', message: 'Your post has been sent!' }));
-    } else {
-      dispatch(addNotification({ type: 'error', message: 'Please log in to post' }));
-    }
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
+    };
+  }, []);
 
+  const resetComposer = () => {
     setContent('');
-    setImagePreview(null);
     setImageFile(null);
+    setImagePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isOverLimit) return;
+
+    // Previously unreachable: the component returned null when signed out,
+    // so the "Please log in to post" toast could never fire.
+    if (!currentUser) {
+      dispatch(addNotification({ type: 'error', message: 'Please log in to post' }));
+      navigate('/login?redirect=%2F');
+      return;
+    }
+
+    if (!content.trim() && !imageFile) return;
+
+    const newTweet: Tweet = {
+      id: Date.now().toString(),
+      author: currentUser,
+      content: content.trim(),
+      // Reuse the existing preview URL rather than leaking a second one.
+      images: imagePreview ? [imagePreview] : undefined,
+      createdAt: new Date().toISOString(),
+      likesCount: 0,
+      retweetsCount: 0,
+      repliesCount: 0,
+      isLiked: false,
+      isRetweeted: false,
+      isBookmarked: false,
+    };
+
+    dispatch(addTweet(newTweet));
+    dispatch(addNotification({ type: 'success', message: 'Your post has been sent!' }));
+    // Hand the blob over to the feed instead of revoking it here.
+    previewUrlRef.current = null;
+    resetComposer();
+  };
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        dispatch(addNotification({ type: 'error', message: 'Image must be less than 5MB' }));
-        return;
-      }
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      dispatch(addNotification({ type: 'error', message: 'Only image files can be attached' }));
+      e.target.value = '';
+      return;
     }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      dispatch(addNotification({ type: 'error', message: 'Image must be less than 5MB' }));
+      e.target.value = '';
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
   };
 
   const removeImage = () => {
-    setImagePreview(null);
     setImageFile(null);
+    setImagePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  if (!currentUser) return null;
+  const canSubmit = (content.trim().length > 0 || imageFile !== null) && !isOverLimit;
 
   return (
     <form className="tweet-composer" onSubmit={handleSubmit}>
       <div className="tweet-composer__header">
         <img
-          src={currentUser.avatar}
+          src={currentUser?.avatar ?? ''}
           alt=""
           className="tweet-composer__avatar"
-          aria-hidden="true"
         />
         <div className="tweet-composer__input-wrapper">
           <textarea
@@ -93,14 +147,14 @@ const TweetComposer = () => {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             aria-label="Tweet content"
+            aria-invalid={isOverLimit}
             rows={1}
-            maxLength={280}
           />
           <div className="tweet-composer__char-count" aria-live="polite">
             <span className={isOverLimit ? 'tweet-composer__char-count--over' : ''}>
               {charCount}
             </span>
-            <span className="tweet-composer__char-count-total">/280</span>
+            <span className="tweet-composer__char-count-total">/{MAX_CHARS}</span>
           </div>
         </div>
       </div>
@@ -176,7 +230,7 @@ const TweetComposer = () => {
         <button
           type="submit"
           className="tweet-composer__post-btn"
-          disabled={(!content.trim() && !imageFile) || isOverLimit}
+          disabled={!canSubmit}
           aria-label="Post"
         >
           Post
