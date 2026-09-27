@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   --font-family-primary: 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-family-stack: serif;
