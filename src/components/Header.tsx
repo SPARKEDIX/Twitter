@@ -1,11 +1,17 @@
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { toggleSidebar, toggleTheme } from '../store/uiSlice';
+import { NavLink } from 'react-router-dom';
 import './Header.css';
 
 const Header = () => {
   const dispatch = useAppDispatch();
   const sidebarOpen = useAppSelector((state) => state.ui.sidebarOpen);
   const theme = useAppSelector((state) => state.ui.theme);
+  const currentUser = useAppSelector((state) => state.auth.user);
+
+  const getProfilePath = () => {
+    return currentUser ? `/profile/${currentUser.username}` : '/profile/rankmandi';
+  };
 
   return (
     <header className="header" role="banner">
@@ -49,14 +55,14 @@ const Header = () => {
         <button className="header__icon-btn" aria-label="Open messages">
           <EnvelopeIcon className="header__icon" aria-hidden="true" />
         </button>
-        <div className="header__profile" aria-label="User menu">
+        <NavLink to={getProfilePath()} className="header__profile" aria-label="View profile">
           <img
-            src="https://via.placeholder.com/32"
+            src={currentUser?.avatar || "https://via.placeholder.com/32"}
             alt=""
             className="header__avatar"
             aria-hidden="true"
           />
-        </div>
+        </NavLink>
       </div>
     </header>
   );

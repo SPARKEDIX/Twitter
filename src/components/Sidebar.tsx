@@ -66,13 +66,14 @@ const navigationItems = [
   { path: '/messages', label: 'Messages', icon: EnvelopeIcon },
   { path: '/bookmarks', label: 'Bookmarks', icon: BookmarkIcon },
   { path: '/lists', label: 'Lists', icon: ListIcon },
-  { path: '/profile', label: 'Profile', icon: PersonIcon },
+  { path: '/profile', label: 'Profile', icon: PersonIcon, dynamic: true },
   { path: '/more', label: 'More', icon: MoreIcon },
 ];
 
 const Sidebar = () => {
   const dispatch = useAppDispatch();
   const sidebarOpen = useAppSelector((state) => state.ui.sidebarOpen);
+  const currentUser = useAppSelector((state) => state.auth.user);
   const location = useLocation();
   const isMobile = useMobile();
 
@@ -80,6 +81,14 @@ const Sidebar = () => {
     if (isMobile) {
       dispatch(toggleSidebar());
     }
+  };
+
+  const getProfilePath = () => {
+    return currentUser ? `/profile/${currentUser.username}` : '/profile/rankmandi';
+  };
+
+  const isProfileActive = () => {
+    return location.pathname.startsWith('/profile/');
   };
 
   return (
@@ -93,11 +102,20 @@ const Sidebar = () => {
           <ul className="sidebar__list" role="list">
             {navigationItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+              let itemPath = item.path;
+              let isActive = false;
+
+              if (item.dynamic && item.path === '/profile') {
+                itemPath = getProfilePath();
+                isActive = isProfileActive();
+              } else {
+                isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+              }
+
               return (
                 <li key={item.path} className="sidebar__item">
                   <NavLink
-                    to={item.path}
+                    to={itemPath}
                     className={`sidebar__link ${isActive ? 'sidebar__link--active' : ''}`}
                     aria-current={isActive ? 'page' : undefined}
                     onClick={handleNavClick}
@@ -117,14 +135,14 @@ const Sidebar = () => {
           </button>
           <div className="sidebar__user">
             <img
-              src="https://via.placeholder.com/40"
+              src={currentUser?.avatar || "https://via.placeholder.com/40"}
               alt=""
               className="sidebar__avatar"
               aria-hidden="true"
             />
             <div className="sidebar__user-info">
-              <span className="sidebar__user-name">Your Name</span>
-              <span className="sidebar__user-handle">@username</span>
+              <span className="sidebar__user-name">{currentUser?.displayName || 'Your Name'}</span>
+              <span className="sidebar__user-handle">@{currentUser?.username || 'username'}</span>
             </div>
           </div>
         </div>
