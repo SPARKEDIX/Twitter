@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { addTweet } from '../store/tweetsSlice';
 import { addNotification } from '../store/uiSlice';
 import { useNavigate } from 'react-router-dom';
 import type { Tweet } from '../types';
 import './TweetComposer.css';
+import GatedImage from '../components/GatedImage'
 
 const MAX_CHARS = 280;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -134,7 +135,7 @@ const TweetComposer = () => {
   return (
     <form className="tweet-composer" onSubmit={handleSubmit}>
       <div className="tweet-composer__header">
-        <img
+        <GatedImage
           src={currentUser?.avatar ?? ''}
           alt=""
           className="tweet-composer__avatar"
@@ -161,7 +162,7 @@ const TweetComposer = () => {
 
       {imagePreview && (
         <div className="tweet-composer__preview">
-          <img src={imagePreview} alt="Preview" className="tweet-composer__preview-img" />
+          <GatedImage src={imagePreview} alt="Preview" className="tweet-composer__preview-img" />
           <button
             type="button"
             className="tweet-composer__remove-btn"

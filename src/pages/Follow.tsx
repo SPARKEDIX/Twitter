@@ -1,4 +1,4 @@
-import { useState, useMemo, type MouseEvent } from 'react';
+﻿import { useState, useMemo, type MouseEvent } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { mockFollowSuggestions, mockRecommendedUsers } from '../utils/mockData';
@@ -6,6 +6,7 @@ import { formatCount } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
 import type { FollowSuggestion, SuggestedUser } from '../types';
 import './Follow.css';
+import GatedImage from '../components/GatedImage'
 
 type FollowTab = 'suggested' | 'following' | 'followers';
 
@@ -169,7 +170,7 @@ const FollowUserItem = ({
 
   return (
     <div className="follow__user-item">
-      <img src={user.avatar} alt="" className="follow__user-avatar" />
+      <GatedImage src={user.avatar} alt="" className="follow__user-avatar" />
       <div className="follow__user-info">
         <div className="follow__user-name-row">
           <span className="follow__user-display-name">{user.displayName}</span>
@@ -190,7 +191,7 @@ const FollowUserItem = ({
           </span>
           {suggestion.followingCount !== undefined && (
             <>
-              <span className="follow__user-separator" aria-hidden="true">·</span>
+              <span className="follow__user-separator" aria-hidden="true">Â·</span>
               <span className="follow__user-following">
                 {formatCount(suggestion.followingCount)} following
               </span>

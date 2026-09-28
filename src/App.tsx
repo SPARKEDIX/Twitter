@@ -10,11 +10,13 @@ import Chat from './pages/Chat';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Privacy from './pages/Privacy';
+import Cookies from './pages/Cookies';
 import NotFound from './pages/NotFound';
 import Preloader from './components/Preloader';
 import Toaster from './components/Toaster';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
+import CookieConsent from './components/CookieConsent';
 import { useThemeSync } from './hooks/useTheme';
 import { showPreloader } from './store/uiSlice';
 import { sessionResolved, sessionResolutionFailed } from './store/authSlice';
@@ -81,6 +83,7 @@ const AppRoutes = () => (
         redirecting gate would strand a logged-out visitor who follows a shared
         link to it. */}
     <Route path="/privacy" element={<Privacy />} />
+    <Route path="/cookies" element={<Cookies />} />
     <Route
       path="/"
       element={
@@ -148,6 +151,9 @@ const App = () => {
           <Preloader />
           <Toaster />
           <AppRoutes />
+          {/* Last, so it paints over the app rather than under it, and is
+              suppressed on the two legal pages where it would be noise. */}
+          <CookieConsent />
         </BrowserRouter>
       </ErrorBoundary>
     </Provider>

@@ -317,7 +317,7 @@ const Privacy = () => (
 
         <footer className="privacy__foot">
           <span>Effective {EFFECTIVE}</span>
-          <Link to="/login">Sign in</Link>
+          <Link to="/cookies">Cookie policy</Link>
         </footer>
       </article>
     </div>

@@ -370,6 +370,9 @@ export function LoginPage({
           <Link to="/privacy" className="auth__foot-link">
             Privacy policy
           </Link>
+          <Link to="/cookies" className="auth__foot-link">
+            Cookie policy
+          </Link>
           <Link to="/" className="auth__foot-link">
             Browse without signing in
           </Link>

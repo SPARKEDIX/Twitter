@@ -1,4 +1,4 @@
-import { useParams, useSearchParams } from 'react-router-dom';
+﻿import { useParams, useSearchParams } from 'react-router-dom';
 import { useAppSelector } from '../hooks/useRedux';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
@@ -14,7 +14,9 @@ import {
 import { formatCount, formatDate } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
 import type { LikedTweet, ProfileUser, ProfileTweet } from '../types';
+import { resolveGatedSrc } from '../utils/consent';
 import './Profile.css';
+import GatedImage from '../components/GatedImage'
 
 type ProfileTab = 'posts' | 'replies' | 'media' | 'likes';
 
@@ -24,6 +26,7 @@ const Profile = () => {
   const { username } = useParams<{ username: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentUser = useAppSelector((state) => state.auth.user);
+  const thirdPartyAllowed = useAppSelector((state) => state.consent.thirdParty);
   const isMobile = useMobile();
 
   // Derived from the URL instead of mirrored into state via an effect.
@@ -74,13 +77,17 @@ const Profile = () => {
       <Sidebar />
       <Header />
       <main className={`main ${isMobile ? 'main--mobile' : ''}`}>
-        <div className="profile__banner" style={{ backgroundImage: `url(${profileUser.banner})` }} aria-hidden="true">
+        <div
+          className="profile__banner"
+          style={{ backgroundImage: `url(${resolveGatedSrc(profileUser.banner, thirdPartyAllowed)})` }}
+          aria-hidden="true"
+        >
           <div className="profile__banner-gradient" />
         </div>
 
         <div className="profile__content">
           <div className="profile__avatar-wrapper">
-            <img
+            <GatedImage
               src={profileUser.avatar}
               alt={`${profileUser.displayName}'s profile picture`}
               className="profile__avatar"
@@ -172,7 +179,7 @@ const Profile = () => {
               <div className="profile__media-grid" role="list" aria-label="Media">
                 {mockProfileMedia.map((image, index) => (
                   <div key={index} className="profile__media-item" role="listitem">
-                    <img
+                    <GatedImage
                       src={image}
                       alt={`Media ${index + 1}`}
                       className="profile__media-image"
@@ -280,7 +287,7 @@ interface ProfileLikeItemProps {
 const ProfileLikeItem = ({ tweet }: ProfileLikeItemProps) => (
   <article className="profile__like-item" aria-label={`Tweet by ${tweet.author.displayName}`}>
     <div className="profile__like-item-header">
-      <img
+      <GatedImage
         src={tweet.author.avatar}
         alt=""
         className="profile__like-item-avatar"

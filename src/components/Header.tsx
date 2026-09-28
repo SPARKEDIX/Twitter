@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from 'react';
+﻿import { useState, type FormEvent } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { toggleSidebar, toggleTheme } from '../store/uiSlice';
 import { signOutUser } from '../store/authSlice';
 import { mockUser } from '../utils/mockData';
 import { NavLink, useNavigate } from 'react-router-dom';
 import './Header.css';
+import GatedImage from '../components/GatedImage'
 
 const Header = () => {
   const dispatch = useAppDispatch();
@@ -102,7 +103,7 @@ const Header = () => {
           <LogoutIcon className="header__icon" aria-hidden="true" />
         </button>
         <NavLink to={profilePath} className="header__profile" aria-label="View your profile">
-          <img
+          <GatedImage
             src={currentUser?.avatar ?? mockUser.avatar}
             alt=""
             className="header__avatar"

@@ -1,0 +1,248 @@
+/* Hallmark · macrostructure: Bottom Notice · same visual language as the auth
+ * and legal pages (hairline rules, mono eyebrows, no shadows, no rounded
+ * card) so the consent UI does not read as a bolted-on vendor widget.
+ */
+
+.consent {
+  --co-gutter: clamp(20px, 5vw, 56px);
+  --co-ink: var(--color-text-primary);
+  --co-muted: var(--color-text-tertiary);
+  --co-rule: color-mix(in srgb, var(--color-text-primary) 16%, transparent);
+  --co-rule-strong: color-mix(in srgb, var(--color-text-primary) 30%, transparent);
+  --co-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 60;
+  padding: 0 var(--co-gutter) max(var(--co-gutter), env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  animation: consent-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes consent-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+.consent__panel {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 980px;
+  border: 1px solid var(--co-rule-strong);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--color-surface-raised) 96%, transparent);
+  backdrop-filter: blur(14px);
+  color: var(--co-ink);
+}
+
+.consent__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px var(--co-gutter);
+  border-bottom: 1px solid var(--co-rule);
+  font-family: var(--co-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--co-muted);
+}
+
+.consent__body {
+  padding: 20px var(--co-gutter) 22px;
+}
+
+.consent__title {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+}
+
+.consent__text {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--co-muted);
+  text-wrap: pretty;
+}
+
+.consent__text a {
+  color: var(--co-ink);
+  text-underline-offset: 3px;
+  text-decoration-color: var(--co-rule-strong);
+}
+
+.consent__text a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* ---- Category rows (expanded panel) ---- */
+.consent__cats {
+  margin-top: 20px;
+  border-top: 1px solid var(--co-rule);
+}
+
+.consent__cat {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--co-rule);
+}
+
+.consent__cat-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.consent__cat-summary {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--co-muted);
+}
+
+/* A switch, not a checkbox - a 44px target reads as deliberate. */
+.consent__switch {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 24px;
+  border: 1px solid var(--co-rule-strong);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.consent__switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--co-muted);
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), background 180ms ease;
+}
+
+.consent__switch[aria-checked='true'] {
+  background: var(--co-ink);
+  border-color: var(--co-ink);
+}
+
+.consent__switch[aria-checked='true']::after {
+  transform: translateX(20px);
+  background: var(--color-surface-base);
+}
+
+.consent__switch:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.consent__locked {
+  flex: none;
+  font-family: var(--co-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--co-muted);
+  padding-top: 5px;
+}
+
+/* ---- Actions ---- */
+.consent__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.consent__btn {
+  padding: 11px 20px;
+  border: 1px solid var(--co-ink);
+  border-radius: 2px;
+  background: var(--co-ink);
+  color: var(--color-surface-base);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 620;
+  cursor: pointer;
+  transition: opacity 160ms ease;
+}
+
+.consent__btn:hover {
+  opacity: 0.86;
+}
+
+.consent__btn--ghost {
+  background: transparent;
+  color: var(--co-ink);
+  border-color: var(--co-rule-strong);
+}
+
+.consent__btn--ghost:hover {
+  border-color: var(--co-ink);
+  opacity: 1;
+}
+
+.consent__toggle {
+  margin-left: auto;
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  font-family: var(--co-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--co-muted);
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+}
+
+.consent__toggle:hover {
+  color: var(--co-ink);
+  border-bottom-color: var(--co-rule-strong);
+}
+
+.consent__btn:focus-visible,
+.consent__toggle:focus-visible,
+.consent__switch:focus-visible {
+  outline: 2px solid var(--co-ink);
+  outline-offset: 3px;
+}
+
+@media (max-width: 620px) {
+  .consent__cat {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .consent__toggle {
+    margin-left: 0;
+    order: 3;
+  }
+  .consent__actions .consent__btn {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consent {
+    animation: none;
+  }
+  .consent__switch::after {
+    transition: none;
+  }
+}

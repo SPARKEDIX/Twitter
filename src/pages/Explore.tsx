@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { mockTrendingTopics, mockCategories, mockRecommendedUsers } from '../utils/mockData';
@@ -6,6 +6,7 @@ import { formatCount } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
 import type { CategoryTopic, SuggestedUser, TrendingTopic } from '../types';
 import './Explore.css';
+import GatedImage from '../components/GatedImage'
 
 const CATEGORY_TABS = ['news', 'sports', 'entertainment'] as const;
 type CategoryTab = (typeof CATEGORY_TABS)[number];
@@ -227,7 +228,7 @@ interface RecommendedUserItemProps {
 
 const RecommendedUserItem = ({ user, isFollowing, onToggleFollow }: RecommendedUserItemProps) => (
   <div className="explore__user-item">
-    <img src={user.avatar} alt="" className="explore__user-avatar" />
+    <GatedImage src={user.avatar} alt="" className="explore__user-avatar" />
     <div className="explore__user-info">
       <div className="explore__user-name-row">
         <span className="explore__user-display-name">{user.displayName}</span>

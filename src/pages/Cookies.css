@@ -1,0 +1,126 @@
+/* Hallmark · macrostructure: Longform Document (shared with the privacy
+ * page) · differentiated by the storage ledger, which the privacy page has
+ * no equivalent of. Same archetype, different instrument.
+ */
+
+.cookies__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4px 0 20px;
+  font-size: 13.5px;
+}
+
+.cookies__table th {
+  text-align: left;
+  padding: 0 14px 9px 0;
+  border-bottom: 1px solid var(--pv-rule);
+  font-family: var(--pv-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pv-muted);
+  white-space: nowrap;
+}
+
+.cookies__table td {
+  padding: 13px 14px 13px 0;
+  border-bottom: 1px solid var(--pv-rule);
+  vertical-align: top;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--pv-ink) 82%, transparent);
+}
+
+.cookies__table td:last-child,
+.cookies__table th:last-child {
+  padding-right: 0;
+}
+
+.cookies__key {
+  font-family: var(--pv-mono);
+  font-size: 12px;
+  color: var(--pv-ink);
+  word-break: break-all;
+}
+
+.cookies__off {
+  font-family: var(--pv-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #30a46c;
+}
+
+.cookies__off--no {
+  color: var(--pv-muted);
+}
+
+/* Choice control, reusing the switch idiom from the consent banner. */
+.cookies__choice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin: 22px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--pv-rule);
+  border-left: 2px solid var(--color-text-primary);
+  border-radius: 2px;
+}
+
+.cookies__choice-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--pv-ink) 80%, transparent);
+}
+
+.cookies__btn {
+  flex: none;
+  padding: 10px 18px;
+  border: 1px solid var(--color-text-primary);
+  border-radius: 2px;
+  background: var(--color-text-primary);
+  color: var(--color-surface-base);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 620;
+  cursor: pointer;
+  transition: opacity 160ms ease;
+}
+
+.cookies__btn:hover {
+  opacity: 0.86;
+}
+
+.cookies__btn:focus-visible {
+  outline: 2px solid var(--color-text-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 620px) {
+  .cookies__table thead {
+    display: none;
+  }
+  .cookies__table tr {
+    display: block;
+    border-bottom: 1px solid var(--pv-rule);
+    padding: 12px 0;
+  }
+  .cookies__table td {
+    display: block;
+    border: 0;
+    padding: 2px 0;
+  }
+  .cookies__table td::before {
+    content: attr(data-label);
+    display: block;
+    font-family: var(--pv-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--pv-muted);
+  }
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { mockConversations, mockMessages } from '../utils/mockData';
@@ -6,6 +6,7 @@ import { formatDate, generateId } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
 import type { Conversation, Message } from '../types';
 import './Chat.css';
+import GatedImage from '../components/GatedImage'
 
 const CURRENT_USER_ID = 'current-user';
 const MAX_MESSAGE_LENGTH = 10000;
@@ -249,7 +250,7 @@ const ConversationItem = ({ conversation, isActive, onClick }: ConversationItemP
       aria-current={isActive ? 'true' : undefined}
       aria-label={`${otherParticipant.displayName}${conversation.unreadCount > 0 ? `, ${conversation.unreadCount} unread` : ''}`}
     >
-      <img
+      <GatedImage
         src={otherParticipant.avatar}
         alt=""
         className="chat__conversation-avatar"
@@ -301,7 +302,7 @@ const MessageItem = ({ message, isOwn, conversation }: MessageItemProps) => {
   return (
     <div className={`chat__message ${isOwn ? 'chat__message--own' : ''}`}>
       {!isOwn && (
-        <img
+        <GatedImage
           src={otherParticipant.avatar}
           alt=""
           className="chat__message-avatar"
@@ -344,7 +345,7 @@ const ChatHeader = ({ conversation }: ChatHeaderProps) => {
     // created a competing landmark.
     <header className="chat__header">
       <div className="chat__header-avatar-wrapper">
-        <img
+        <GatedImage
           src={otherParticipant.avatar}
           alt=""
           className="chat__header-avatar"

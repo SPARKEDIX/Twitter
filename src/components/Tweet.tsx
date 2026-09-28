@@ -1,10 +1,11 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { likeTweet, retweet, bookmarkTweet } from '../store/tweetsSlice';
 import { addNotification } from '../store/uiSlice';
 import { formatDate, formatCount, classNames } from '../utils/helpers';
 import type { Tweet as TweetModel } from '../types';
 import './Tweet.css';
+import GatedImage from '../components/GatedImage'
 
 interface TweetProps {
   tweet: TweetModel;
@@ -66,7 +67,7 @@ const Tweet = ({ tweet }: TweetProps) => {
   return (
     <article className="tweet" aria-label={`Tweet by ${tweet.author.displayName}`}>
       <div className="tweet__header">
-        <img
+        <GatedImage
           src={tweet.author.avatar}
           alt=""
           className="tweet__avatar"
@@ -134,7 +135,7 @@ const Tweet = ({ tweet }: TweetProps) => {
         {tweet.images && tweet.images.length > 0 && (
           <div className="tweet__images" role="list" aria-label="Tweet images">
             {tweet.images.map((image, index) => (
-              <img
+              <GatedImage
                 key={index}
                 src={image}
                 alt={`Tweet image ${index + 1}`}

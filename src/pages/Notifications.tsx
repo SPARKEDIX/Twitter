@@ -1,4 +1,4 @@
-import { useState, useMemo, type ReactElement, type ReactNode } from 'react';
+﻿import { useState, useMemo, type ReactElement, type ReactNode } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { markRead, markAllRead, clearAll } from '../store/activitySlice';
 import Sidebar from '../components/Sidebar';
@@ -7,6 +7,7 @@ import { formatDate } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
 import type { ActivityType, Notification } from '../types';
 import './Notifications.css';
+import GatedImage from '../components/GatedImage'
 
 type Filter = 'all' | 'mentions' | 'verified';
 
@@ -292,7 +293,7 @@ const NotificationItem = ({
             : `Notification from ${notification.actor.displayName}`
         }
       >
-        <img
+        <GatedImage
           src={notification.actor.avatar}
           alt=""
           className="notification__avatar"

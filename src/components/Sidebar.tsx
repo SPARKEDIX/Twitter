@@ -1,4 +1,4 @@
-import { useAppSelector, useAppDispatch } from '../hooks/useRedux';
+﻿import { useAppSelector, useAppDispatch } from '../hooks/useRedux';
 import { setSidebarOpen, addNotification } from '../store/uiSlice';
 import { signOutUser } from '../store/authSlice';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { useMediaQuery, MOBILE_BREAKPOINT } from '../hooks/useMobile';
 import { mockUser } from '../utils/mockData';
 import { classNames } from '../utils/helpers';
 import './Sidebar.css';
+import GatedImage from '../components/GatedImage'
 
 // SVG Icons - defined before use
 const HomeIcon = ({ className }: { className?: string }) => (
@@ -160,7 +161,7 @@ const Sidebar = () => {
             <span className="sidebar__tweet-text">Post</span>
           </button>
           <div className="sidebar__user">
-            <img
+            <GatedImage
               src={currentUser?.avatar ?? mockUser.avatar}
               alt=""
               className="sidebar__avatar"
