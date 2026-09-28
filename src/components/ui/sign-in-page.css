@@ -1,0 +1,560 @@
+/* Hallmark · macrostructure: Monolith Masthead · H1 hero knobs: size=xxl, alignment=left-bias
+ * theme: Studio · accent: near-black ~3% · studied: no
+ *
+ * The old layout was the textbook AI-slop default: stock-photo split screen,
+ * a centred max-w-md card, rounded-xl boxed inputs, and a blue gradient
+ * wrapper. Every one of those is replaced below with a single left-biased
+ * editorial column, underlined fields, and hairline rules - no cards, no
+ * shadows, no gradients doing structural work.
+ */
+
+.auth {
+  --auth-gutter: clamp(20px, 5vw, 72px);
+  --auth-ink: var(--color-text-primary);
+  --auth-muted: var(--color-text-tertiary);
+  --auth-rule: color-mix(in srgb, var(--color-text-primary) 14%, transparent);
+  --auth-rule-strong: color-mix(in srgb, var(--color-text-primary) 28%, transparent);
+  --auth-surface: var(--color-surface-base);
+  --auth-accent: var(--color-text-primary);
+  --auth-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--auth-surface);
+  color: var(--auth-ink);
+  isolation: isolate;
+  overflow-x: hidden;
+}
+
+/* Film grain. A 3%-opacity turbulence layer is the cheapest way to stop a
+ * large flat field reading as "unfinished template". */
+.auth::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.032;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---- Masthead bar ---- */
+.auth__bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px var(--auth-gutter);
+  border-bottom: 1px solid var(--auth-rule);
+}
+
+.auth__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--auth-ink);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.auth__mark:hover {
+  text-decoration: none;
+  opacity: 0.68;
+}
+
+.auth__mark svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.auth__bar-links {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.auth__bar-link {
+  font-family: var(--auth-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--auth-muted);
+  text-decoration: none;
+}
+
+.auth__bar-link:hover {
+  color: var(--auth-ink);
+  text-decoration: none;
+}
+
+/* ---- Main column: left-biased, never centred ---- */
+.auth__main {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: clamp(40px, 7vh, 88px) var(--auth-gutter);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+}
+
+@media (min-width: 1080px) {
+  .auth__main {
+    /* Asymmetry is the point: the form sits in the left half and the right
+       half stays empty. Centring is what made the old one read as a template. */
+    grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
+    column-gap: clamp(40px, 7vw, 120px);
+  }
+}
+
+.auth__lede {
+  max-width: 30ch;
+  margin-bottom: clamp(36px, 6vh, 64px);
+}
+
+.auth__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 22px;
+  font-family: var(--auth-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--auth-muted);
+}
+
+.auth__eyebrow::before {
+  content: '';
+  width: 22px;
+  height: 1px;
+  background: var(--auth-rule-strong);
+}
+
+.auth__title {
+  margin: 0;
+  font-size: clamp(2.6rem, 7.2vw, 4.6rem);
+  font-weight: 680;
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.auth__sub {
+  margin: 20px 0 0;
+  max-width: 42ch;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--auth-muted);
+  text-wrap: pretty;
+}
+
+.auth__switch {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--auth-muted);
+}
+
+.auth__switch-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--auth-ink);
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 1px solid var(--auth-rule-strong);
+  transition: border-color var(--motion-duration-instant) ease;
+}
+
+.auth__switch-btn:hover:not(:disabled) {
+  border-bottom-color: var(--auth-accent);
+}
+
+.auth__switch-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---- Form ---- */
+.auth__form-wrap {
+  width: 100%;
+  max-width: 400px;
+}
+
+@media (min-width: 1080px) {
+  .auth__form-wrap {
+    max-width: 380px;
+  }
+}
+
+.auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+/* Underlined fields instead of boxed inputs. Removes six borders, six radii
+   and six shadows, and gives the form an editorial rather than widget feel. */
+.auth__field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.auth__label {
+  font-family: var(--auth-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--auth-muted);
+}
+
+.auth__input {
+  width: 100%;
+  padding: 9px 0 11px;
+  border: 0;
+  border-bottom: 1px solid var(--auth-rule-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--auth-ink);
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  transition: border-color var(--motion-duration-instant) ease;
+  appearance: none;
+}
+
+.auth__input::placeholder {
+  color: color-mix(in srgb, var(--auth-muted) 62%, transparent);
+}
+
+.auth__input:hover:not(:disabled):not(:focus) {
+  border-bottom-color: color-mix(in srgb, var(--color-text-primary) 42%, transparent);
+}
+
+.auth__input:focus {
+  outline: none;
+  border-bottom-color: var(--auth-accent);
+  border-bottom-width: 2px;
+  padding-bottom: 10px;
+}
+
+.auth__input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth__input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth__input-wrap .auth__input {
+  padding-right: 44px;
+}
+
+.auth__reveal {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--auth-muted);
+  cursor: pointer;
+  transition: color var(--motion-duration-instant) ease, background var(--motion-duration-instant) ease;
+}
+
+.auth__reveal:hover:not(:disabled) {
+  color: var(--auth-ink);
+  background: color-mix(in srgb, var(--auth-text-primary, var(--color-text-primary)) 8%, transparent);
+}
+
+.auth__reveal:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.auth__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: -6px;
+}
+
+.auth__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  color: var(--auth-muted);
+  cursor: pointer;
+}
+
+.auth__check input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.auth__link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--auth-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--auth-muted);
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+}
+
+.auth__link-btn:hover:not(:disabled) {
+  color: var(--auth-ink);
+  border-bottom-color: var(--auth-rule-strong);
+  text-decoration: none;
+}
+
+.auth__link-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.auth__submit {
+  position: relative;
+  width: 100%;
+  padding: 15px 22px;
+  border: 1px solid var(--auth-accent);
+  border-radius: 2px;
+  background: var(--auth-accent);
+  color: var(--auth-surface);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 640;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: opacity var(--motion-duration-instant) ease, transform var(--motion-duration-instant) ease;
+}
+
+.auth__submit:hover:not(:disabled) {
+  opacity: 0.86;
+}
+
+.auth__submit:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.auth__submit:disabled {
+  opacity: 0.45;
+  cursor: progress;
+}
+
+/* Busy state uses a sweeping hairline rather than a spinner. */
+.auth__submit[data-busy='true'] {
+  color: transparent;
+}
+
+.auth__submit[data-busy='true']::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 38%;
+  background: var(--auth-surface);
+  animation: auth-sweep 1.1s ease-in-out infinite;
+}
+
+@keyframes auth-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(265%); }
+}
+
+
+/* ---- Divider + social ---- */
+.auth__divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--auth-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--auth-muted);
+}
+
+.auth__divider::before,
+.auth__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--auth-rule);
+}
+
+.auth__socials {
+  display: flex;
+  gap: 10px;
+}
+
+/* Square hairline chips. The old 2-up rounded buttons each carried a word and
+   an icon; a tight icon row reads quieter and costs a third of the width. */
+.auth__social {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 12px 10px;
+  border: 1px solid var(--auth-rule-strong);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--auth-ink);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 560;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  transition: border-color var(--motion-duration-instant) ease, background var(--motion-duration-instant) ease;
+}
+
+.auth__social:hover:not(:disabled) {
+  border-color: var(--auth-accent);
+  background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+}
+
+.auth__social:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.auth__social svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* ---- Messages ---- */
+.auth__alert {
+  display: flex;
+  gap: 11px;
+  padding: 13px 15px;
+  border: 1px solid var(--auth-rule-strong);
+  border-left-width: 2px;
+  border-radius: 2px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.auth__alert--error {
+  border-left-color: #e5484d;
+  background: color-mix(in srgb, #e5484d 9%, transparent);
+  color: var(--auth-ink);
+}
+
+.auth__alert--ok {
+  border-left-color: #30a46c;
+  background: color-mix(in srgb, #30a46c 9%, transparent);
+  color: var(--auth-ink);
+}
+
+/* ---- Footer ---- */
+.auth__foot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px var(--auth-gutter);
+  border-top: 1px solid var(--auth-rule);
+  font-family: var(--auth-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--auth-muted);
+}
+
+.auth__foot-links {
+  display: flex;
+  gap: 20px;
+}
+
+.auth__foot-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.auth__foot-link:hover {
+  color: var(--auth-ink);
+  text-decoration: none;
+}
+
+/* ---- Focus ring: one consistent treatment across the whole page ---- */
+.auth__submit:focus-visible,
+.auth__social:focus-visible,
+.auth__switch-btn:focus-visible,
+.auth__link-btn:focus-visible,
+.auth__reveal:focus-visible,
+.auth__bar-link:focus-visible,
+.auth__foot-link:focus-visible,
+.auth__mark:focus-visible {
+  outline: 2px solid var(--auth-accent);
+  outline-offset: 3px;
+}
+
+/* The input draws its own focus state, so suppress the global ring there to
+   avoid a double indicator. */
+.auth__input:focus-visible {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth__submit[data-busy='true']::after {
+    animation: none;
+    width: 100%;
+    opacity: 0.4;
+  }
+}
+
+@media (max-width: 560px) {
+  .auth__title {
+    letter-spacing: -0.035em;
+  }
+  .auth__row {
+    gap: 12px;
+  }
+  .auth__social span {
+    display: none;
+  }
+  .auth__social {
+    padding: 13px 10px;
+  }
+}
+

@@ -9,6 +9,7 @@ import Notifications from './pages/Notifications';
 import Chat from './pages/Chat';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
+import Privacy from './pages/Privacy';
 import NotFound from './pages/NotFound';
 import Preloader from './components/Preloader';
 import Toaster from './components/Toaster';
@@ -76,6 +77,10 @@ const RouteChangeEffects = () => {
 const AppRoutes = () => (
   <Routes>
     <Route path="/login" element={<Login />} />
+    {/* Public: a legal page must stay reachable when signed out, and a
+        redirecting gate would strand a logged-out visitor who follows a shared
+        link to it. */}
+    <Route path="/privacy" element={<Privacy />} />
     <Route
       path="/"
       element={

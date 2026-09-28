@@ -1,0 +1,354 @@
+/* Hallmark · macrostructure: Longform Document · H1 hero knobs: size=lg, alignment=left-bias
+ * theme: Studio · accent: near-black ~3% · studied: no
+ *
+ * Deliberately NOT the auth page's rhythm. The login page is a single
+ * oversized left-biased statement with hairline fields; this is a narrow
+ * measure of running text with numbered clauses and a sticky index. Same
+ * token palette, opposite structure - two pages, two shapes.
+ */
+
+.privacy {
+  --pv-gutter: clamp(20px, 5vw, 56px);
+  --pv-ink: var(--color-text-primary);
+  --pv-muted: var(--color-text-tertiary);
+  --pv-rule: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
+  --pv-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+
+  min-height: 100vh;
+  background: var(--color-surface-base);
+  color: var(--pv-ink);
+}
+
+/* ---- Top bar ---- */
+.privacy__bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px var(--pv-gutter);
+  border-bottom: 1px solid var(--pv-rule);
+  background: color-mix(in srgb, var(--color-surface-base) 88%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.privacy__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--pv-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pv-muted);
+  text-decoration: none;
+}
+
+.privacy__back:hover {
+  color: var(--pv-ink);
+  text-decoration: none;
+}
+
+.privacy__back svg {
+  width: 13px;
+  height: 13px;
+  transition: transform 160ms ease;
+}
+
+.privacy__back:hover svg {
+  transform: translateX(-3px);
+}
+
+.privacy__stamp {
+  font-family: var(--pv-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pv-muted);
+}
+
+/* ---- Shell: index rail + measure ---- */
+.privacy__shell {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: clamp(44px, 8vh, 96px) var(--pv-gutter) 120px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 64px);
+}
+
+@media (min-width: 940px) {
+  .privacy__shell {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+}
+
+/* ---- Sticky index ---- */
+.privacy__index {
+  font-family: var(--pv-mono);
+  font-size: 11.5px;
+  line-height: 1.9;
+}
+
+@media (min-width: 940px) {
+  .privacy__index {
+    position: sticky;
+    top: 88px;
+    align-self: start;
+  }
+}
+
+.privacy__index-title {
+  margin: 0 0 14px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--pv-muted);
+}
+
+.privacy__index ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--pv-rule);
+}
+
+.privacy__index a {
+  display: block;
+  padding: 3px 0 3px 14px;
+  margin-left: -1px;
+  border-left: 1px solid transparent;
+  color: var(--pv-muted);
+  text-decoration: none;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.privacy__index a:hover {
+  color: var(--pv-ink);
+  border-left-color: var(--pv-ink);
+  text-decoration: none;
+}
+
+/* Narrow screens: collapse the rail into a plain two-column list. */
+@media (max-width: 939px) {
+  .privacy__index {
+    padding-bottom: 26px;
+    border-bottom: 1px solid var(--pv-rule);
+  }
+  .privacy__index ol {
+    columns: 2;
+    column-gap: 22px;
+    border-left: 0;
+  }
+  .privacy__index a {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+/* ---- Document ---- */
+.privacy__doc {
+  /* A measure, not a container. Long lines are the strongest signal that a
+     page was written rather than assembled. */
+  max-width: 68ch;
+}
+
+.privacy__eyebrow {
+  margin: 0 0 16px;
+  font-family: var(--pv-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--pv-muted);
+}
+
+.privacy__title {
+  margin: 0;
+  font-size: clamp(1.9rem, 4.4vw, 2.9rem);
+  font-weight: 660;
+  line-height: 1.04;
+  letter-spacing: -0.032em;
+  text-wrap: balance;
+}
+
+.privacy__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 22px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--pv-rule);
+  font-family: var(--pv-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pv-muted);
+}
+
+.privacy__standfirst {
+  margin: 40px 0 0;
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--pv-ink);
+  text-wrap: pretty;
+}
+
+.privacy__body {
+  margin-top: 44px;
+}
+
+.privacy__section {
+  padding-top: 30px;
+  margin-top: 30px;
+  border-top: 1px solid var(--pv-rule);
+  scroll-margin-top: 88px;
+}
+
+.privacy__section:first-of-type {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: 0;
+}
+
+.privacy__h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 640;
+  letter-spacing: -0.015em;
+}
+
+.privacy__h2 span {
+  font-family: var(--pv-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--pv-muted);
+  flex: none;
+}
+
+.privacy__section p {
+  margin: 0 0 14px;
+  font-size: 15px;
+  line-height: 1.72;
+  color: color-mix(in srgb, var(--pv-ink) 82%, transparent);
+  text-wrap: pretty;
+}
+
+.privacy__section p:last-child {
+  margin-bottom: 0;
+}
+
+.privacy__section a {
+  color: var(--pv-ink);
+  text-underline-offset: 3px;
+  text-decoration-color: var(--pv-rule);
+}
+
+.privacy__section a:hover {
+  text-decoration-color: currentColor;
+}
+
+.privacy__section ul {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.privacy__section li {
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 9px;
+  font-size: 15px;
+  line-height: 1.72;
+  color: color-mix(in srgb, var(--pv-ink) 82%, transparent);
+}
+
+.privacy__section li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.72em;
+  width: 9px;
+  height: 1px;
+  background: var(--pv-muted);
+}
+
+.privacy__section strong {
+  color: var(--pv-ink);
+  font-weight: 620;
+}
+
+.privacy__section code {
+  padding: 1px 5px;
+  border: 1px solid var(--pv-rule);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--pv-ink) 5%, transparent);
+  font-family: var(--pv-mono);
+  font-size: 0.855em;
+  letter-spacing: -0.01em;
+  color: var(--pv-ink);
+  word-break: break-word;
+}
+
+/* Callout: the one place a panel is allowed, because it marks a real
+   behavioural difference rather than decoration. */
+.privacy__callout {
+  margin: 20px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--pv-rule);
+  border-left: 2px solid var(--color-text-primary);
+  border-radius: 2px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--pv-ink) 80%, transparent);
+}
+
+.privacy__callout strong {
+  display: block;
+  margin-bottom: 5px;
+  font-family: var(--pv-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pv-ink);
+}
+
+.privacy__foot {
+  margin-top: 52px;
+  padding-top: 22px;
+  border-top: 1px solid var(--pv-rule);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--pv-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pv-muted);
+}
+
+.privacy__foot a {
+  color: var(--pv-muted);
+  text-decoration: none;
+}
+
+.privacy__foot a:hover {
+  color: var(--pv-ink);
+  text-decoration: none;
+}
+
+.privacy__back:focus-visible,
+.privacy__index a:focus-visible,
+.privacy__foot a:focus-visible {
+  outline: 2px solid var(--color-text-primary);
+  outline-offset: 3px;
+}
+
