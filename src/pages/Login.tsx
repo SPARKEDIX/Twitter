@@ -1,15 +1,27 @@
-import { useCallback } from 'react';
-import { useAppDispatch } from '../hooks/useRedux';
+import { useCallback, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { login } from '../store/authSlice';
+import {
+  signInWithEmail,
+  signUpWithEmail,
+  signInWithSocialProvider,
+  sendPasswordReset,
+  clearAuthError,
+} from '../store/authSlice';
 import { addNotification } from '../store/uiSlice';
-import { mockUser } from '../utils/mockData';
-import { LoginPage } from '../components/ui/sign-in-page';
+import { LoginPage, type AuthMode } from '../components/ui/sign-in-page';
 
 const Login = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // The pending flag and the error come from the auth slice, which gets them
+  // from the rejected thunk. The previous version faked a 1.5s delay and
+  // hard-coded a mock user, so a wrong password still "succeeded".
+  const pending = useAppSelector((state) => state.auth.pending);
+  const authError = useAppSelector((state) => state.auth.error);
+  const resetEmailSent = useAppSelector((state) => state.auth.resetEmailSent);
 
   // Guard against open-redirects: only same-origin relative paths are honoured.
   const resolveRedirect = useCallback(() => {
@@ -20,31 +32,74 @@ const Login = () => {
     return raw;
   }, [searchParams]);
 
-  const completeLogin = useCallback(
-    (token: string) => {
-      dispatch(login({ user: mockUser, token }));
-      dispatch(addNotification({ type: 'success', message: `Welcome back, ${mockUser.displayName}!` }));
+  // An already-authenticated visitor has no business on /login.
+  const status = useAppSelector((state) => state.auth.status);
+  useEffect(() => {
+    if (status === 'authenticated') {
+      navigate(resolveRedirect(), { replace: true });
+    }
+  }, [status, navigate, resolveRedirect]);
+
+  const completeAuth = useCallback(
+    (message: string) => {
+      dispatch(addNotification({ type: 'success', message }));
       navigate(resolveRedirect(), { replace: true });
     },
     [dispatch, navigate, resolveRedirect]
   );
 
-  // We wrap the presentational LoginPage to keep Redux concerns here.
+  const handleEmailAuth = useCallback(
+    async (mode: AuthMode, formData: { email: string; password: string; displayName: string }) => {
+      const action =
+        mode === 'signup'
+          ? signUpWithEmail({ email: formData.email, password: formData.password, displayName: formData.displayName })
+          : signInWithEmail({ email: formData.email, password: formData.password });
+
+      // unwrap() re-throws the rejectValue so the presentational component can
+      // render the message inline next to the form.
+      const result = await dispatch(action).unwrap();
+      completeAuth(
+        mode === 'signup' ? `Welcome, ${result.displayName}!` : `Welcome back, ${result.displayName}!`
+      );
+    },
+    [dispatch, completeAuth]
+  );
+
+  const handleSocialAuth = useCallback(
+    async (provider: 'google' | 'github' | 'apple') => {
+      const result = await dispatch(signInWithSocialProvider(provider)).unwrap();
+      completeAuth(`Signed in as ${result.displayName}`);
+    },
+    [dispatch, completeAuth]
+  );
+
+  const handleForgotPassword = useCallback(
+    async (email: string) => {
+      await dispatch(sendPasswordReset(email)).unwrap();
+    },
+    [dispatch]
+  );
+
+  // Drop any stale error when the page mounts or unmounts, so a failure from
+  // a previous visit is not still on screen.
+  useEffect(() => {
+    dispatch(clearAuthError());
+    return () => {
+      dispatch(clearAuthError());
+    };
+  }, [dispatch]);
+
   return (
     <LoginPage
-      onLogin={async () => {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        completeLogin('mock-jwt-token');
-      }}
-      onGoogleLogin={async () => {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        completeLogin('mock-google-token');
-      }}
-      onGitHubLogin={async () => {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        completeLogin('mock-github-token');
-      }}
+      isLoading={pending}
+      error={authError}
+      resetEmailSent={resetEmailSent}
+      onSignIn={(formData) => handleEmailAuth('signin', formData)}
+      onSignUp={(formData) => handleEmailAuth('signup', formData)}
+      onGoogleLogin={() => handleSocialAuth('google')}
+      onGitHubLogin={() => handleSocialAuth('github')}
+      onAppleLogin={() => handleSocialAuth('apple')}
+      onForgotPassword={handleForgotPassword}
     />
   );
 };

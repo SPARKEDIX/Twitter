@@ -23,10 +23,22 @@ export interface Tweet {
   isBookmarked: boolean;
 }
 
+/**
+ * Lifecycle of the auth slice.
+ *
+ * `initializing` exists so route guards can wait for Firebase to re-hydrate the
+ * session instead of bouncing an already-signed-in user to /login on refresh.
+ * `pending` covers an in-flight sign-in/sign-up request.
+ */
+export type AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated';
+
 export interface AuthState {
-  isAuthenticated: boolean;
+  status: AuthStatus;
   user: User | null;
-  token: string | null;
+  pending: boolean;
+  error: string | null;
+  /** True once the password-reset email has been sent, used for UI feedback. */
+  resetEmailSent: boolean;
 }
 
 /* ------------------------------------------------------------------ *

@@ -1,6 +1,6 @@
 import { useAppSelector, useAppDispatch } from '../hooks/useRedux';
 import { setSidebarOpen, addNotification } from '../store/uiSlice';
-import { logout } from '../store/authSlice';
+import { signOutUser } from '../store/authSlice';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useMediaQuery, MOBILE_BREAKPOINT } from '../hooks/useMobile';
 import { mockUser } from '../utils/mockData';
@@ -86,7 +86,10 @@ const Sidebar = () => {
   const isProfileActive = () => location.pathname.startsWith('/profile/');
 
   const handleLogout = () => {
-    dispatch(logout());
+    // Async: Firebase clears the session, then the auth observer resolves the
+    // store. `unwrap()` is deliberately not used here - a failed sign-out still
+    // force-logs-out locally, so there is nothing useful to surface.
+    void dispatch(signOutUser());
     dispatch(setSidebarOpen(false));
     dispatch(addNotification({ type: 'info', message: 'You have been logged out.' }));
     navigate('/login', { replace: true });

@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment (never commit real secrets)
+.env
+.env.local
+.env.*.local

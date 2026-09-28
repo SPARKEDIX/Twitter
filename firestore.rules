@@ -1,0 +1,26 @@
+rules_version = '2';
+
+// Firestore security rules for the user-profile documents the auth backend
+// creates on first sign-in.
+//
+// Deploy with:
+//   firebase deploy --only firestore:rules
+//
+// NOTE: these are the rules the app assumes. The client already degrades
+// gracefully when they are absent (see `loadUserProfile` in
+// src/services/authService.ts), so nothing breaks - you just get a profile
+// derived from the Firebase user record instead of a persisted one.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // A user may read and write only their own profile. Everyone signed in
+    // may read other users' profiles so the app can render author cards.
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

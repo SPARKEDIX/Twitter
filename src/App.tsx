@@ -16,8 +16,49 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useThemeSync } from './hooks/useTheme';
 import { showPreloader } from './store/uiSlice';
+import { sessionResolved, sessionResolutionFailed } from './store/authSlice';
 import { useAppDispatch } from './hooks/useRedux';
+import { observeAuthState } from './services/authService';
+import { firebasePersistenceReady } from './lib/firebase';
 import './index.css';
+
+/**
+ * Bridges Firebase auth into Redux.
+ *
+ * Firebase is the single source of truth for the session. This observer
+ * mirrors it into the store on first load, on sign-in/sign-out, and when the
+ * user signs out in another tab. Nothing else is allowed to decide whether
+ * someone is authenticated.
+ */
+const AuthObserver = () => {
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    // `persistenceReady` resolves once localStorage-backed persistence is
+    // applied. Subscribing after it guarantees the first `onAuthStateChanged`
+    // callback reflects the persisted session rather than a null intermediate.
+    let unsubscribe = () => {};
+
+    firebasePersistenceReady
+      .then(() => {
+        unsubscribe = observeAuthState(
+          (user) => dispatch(sessionResolved(user)),
+          (error) => {
+            console.error('[auth] Failed to resolve the Firebase session.', error);
+            dispatch(sessionResolutionFailed());
+          }
+        );
+      })
+      .catch((error: unknown) => {
+        console.error('[auth] Could not initialise the auth observer.', error);
+        dispatch(sessionResolutionFailed());
+      });
+
+    return () => unsubscribe();
+  }, [dispatch]);
+
+  return null;
+};
 
 /** Re-arms the preloader on every navigation, not just the first load. */
 const RouteChangeEffects = () => {
@@ -95,6 +136,7 @@ const App = () => {
     <Provider store={store}>
       <ErrorBoundary>
         <BrowserRouter>
+          <AuthObserver />
           <RouteChangeEffects />
           {/* Rendered once here. It used to also be mounted inside Home,
               producing two competing preloader overlays and timers. */}

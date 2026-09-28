@@ -59,5 +59,11 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true
+  },
+  build: {
+    // Firebase Auth sits in the main chunk and Firestore in a lazy chunk.
+    // The default 500 kB warning is noise here - splitting further would mean
+    // deferring auth, which is exactly what we do not want on a login-first app.
+    chunkSizeWarningLimit: 700
   }
 })

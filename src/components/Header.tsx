@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { toggleSidebar, toggleTheme } from '../store/uiSlice';
-import { logout } from '../store/authSlice';
+import { signOutUser } from '../store/authSlice';
 import { mockUser } from '../utils/mockData';
 import { NavLink, useNavigate } from 'react-router-dom';
 import './Header.css';
@@ -26,7 +26,10 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
+    // Async: Firebase clears the session, then the auth observer resolves the
+    // store. `unwrap()` is deliberately not used here - a failed sign-out still
+    // force-logs-out locally, so there is nothing useful to surface.
+    void dispatch(signOutUser());
     navigate('/login', { replace: true });
   };
 
