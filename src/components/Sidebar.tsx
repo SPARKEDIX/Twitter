@@ -1,4 +1,6 @@
-﻿import { useAppSelector, useAppDispatch } from '../hooks/useRedux';
+﻿import type { ReactElement } from 'react';
+import { useAppSelector, useAppDispatch } from '../hooks/useRedux';
+import { APP_ROUTES } from '../config/routes';
 import { setSidebarOpen, addNotification } from '../store/uiSlice';
 import { signOutUser } from '../store/authSlice';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
@@ -57,15 +59,20 @@ const LogoutIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const navigationItems = [
-  { path: '/', label: 'Home', icon: HomeIcon },
-  { path: '/explore', label: 'Explore', icon: SearchIcon },
-  // /follow existed as a route but had no nav entry, making it unreachable.
-  { path: '/follow', label: 'Follow', icon: PeopleIcon },
-  { path: '/notifications', label: 'Notifications', icon: BellIcon },
-  { path: '/messages', label: 'Messages', icon: EnvelopeIcon },
-  { path: '/profile', label: 'Profile', icon: PersonIcon, dynamic: true },
-];
+/** Icon per route. Labels, descriptions and guards come from config/routes.ts. */
+const NAV_ICONS: Record<string, (props: { className?: string }) => ReactElement> = {
+  '/': HomeIcon,
+  '/explore': SearchIcon,
+  '/follow': PeopleIcon,
+  '/notifications': BellIcon,
+  '/messages': EnvelopeIcon,
+  '/profile': PersonIcon,
+};
+
+const navigationItems = APP_ROUTES.filter((route) => route.requiresAuth).map((route) => ({
+  ...route,
+  icon: NAV_ICONS[route.path],
+}));
 
 const Sidebar = () => {
   const dispatch = useAppDispatch();
@@ -127,7 +134,7 @@ const Sidebar = () => {
           <ul className="sidebar__list" role="list">
             {navigationItems.map((item) => {
               const Icon = item.icon;
-              const isDynamicProfile = item.dynamic === true && item.path === '/profile';
+              const isDynamicProfile = item.path === '/profile';
               const itemPath = isDynamicProfile ? profilePath : item.path;
               const isActive = isDynamicProfile
                 ? isProfileActive()

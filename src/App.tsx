@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store';
@@ -23,7 +23,29 @@ import { sessionResolved, sessionResolutionFailed } from './store/authSlice';
 import { useAppDispatch } from './hooks/useRedux';
 import { observeAuthState } from './services/authService';
 import { firebasePersistenceReady } from './lib/firebase';
+import { APP_ROUTES, REDIRECTED_PATHS } from './config/routes';
 import './index.css';
+
+/**
+ * Literal union of every route path, derived from the table itself.
+ *
+ * `Record<RoutePath, ReactNode>` is the guard that matters: add a route
+ * without a component (or remove one) and the build fails, instead of the
+ * router silently matching a path and rendering nothing.
+ */
+type RoutePath = (typeof APP_ROUTES)[number]['path'];
+
+const ROUTE_ELEMENTS: Record<RoutePath, ReactNode> = {
+  '/': <Home />,
+  '/explore': <Explore />,
+  '/follow': <Follow />,
+  '/notifications': <Notifications />,
+  '/messages': <Chat />,
+  '/profile': <Profile />,
+  '/login': <Login />,
+  '/privacy': <Privacy />,
+  '/cookies': <Cookies />,
+};
 
 /**
  * Bridges Firebase auth into Redux.
@@ -78,63 +100,25 @@ const RouteChangeEffects = () => {
 
 const AppRoutes = () => (
   <Routes>
-    <Route path="/login" element={<Login />} />
-    {/* Public: a legal page must stay reachable when signed out, and a
-        redirecting gate would strand a logged-out visitor who follows a shared
-        link to it. */}
-    <Route path="/privacy" element={<Privacy />} />
-    <Route path="/cookies" element={<Cookies />} />
-    <Route
-      path="/"
-      element={
-        <ProtectedRoute>
-          <Home />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/explore"
-      element={
-        <ProtectedRoute>
-          <Explore />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/follow"
-      element={
-        <ProtectedRoute>
-          <Follow />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/notifications"
-      element={
-        <ProtectedRoute>
-          <Notifications />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/messages"
-      element={
-        <ProtectedRoute>
-          <Chat />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/profile/:username"
-      element={
-        <ProtectedRoute>
-          <Profile />
-        </ProtectedRoute>
-      }
-    />
-    <Route path="/bookmarks" element={<Navigate to="/" replace />} />
-    <Route path="/lists" element={<Navigate to="/" replace />} />
-    <Route path="/more" element={<Navigate to="/" replace />} />
+    {/* Built from APP_ROUTES so the route table, the sidebar and the 404
+        ledger can never drift apart. `pattern` differs from `path` only for
+        the dynamic profile route. */}
+    {APP_ROUTES.map(({ path, pattern, requiresAuth }) => {
+      const element = ROUTE_ELEMENTS[path];
+      return (
+        <Route
+          key={path}
+          path={pattern}
+          element={requiresAuth ? <ProtectedRoute>{element}</ProtectedRoute> : element}
+        />
+      );
+    })}
+
+    {/* Legacy paths kept alive as redirects rather than dead ends. */}
+    {REDIRECTED_PATHS.map((path) => (
+      <Route key={path} path={path} element={<Navigate to="/" replace />} />
+    ))}
+
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

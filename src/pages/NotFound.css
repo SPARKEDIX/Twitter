@@ -1,42 +1,275 @@
-.not-found {
+/* Hallmark · macrostructure: Diagnostic Ledger
+ * theme: Studio · accent: near-black ~3% · studied: no
+ *
+ * Third archetype in the app, deliberately unlike the other two:
+ *   - auth  : Monolith masthead, one oversized left-biased statement
+ *   - legal : Longform document, 68ch measure, sticky index, numbered clauses
+ *   - this  : Full-bleed ledger, full-width rows, mono metadata
+ *
+ * A 404 *is* a failed request, so it is dressed as one - a request line and a
+ * field table, with the route index below as the recovery path. The old
+ * version was centred text under a 64px blue number with a pill button, which
+ * is the most generated-looking 404 there is.
+ */
+
+.nf {
+  --nf-gutter: clamp(20px, 5vw, 56px);
+  --nf-ink: var(--color-text-primary);
+  --nf-muted: var(--color-text-tertiary);
+  --nf-rule: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
+  --nf-rule-strong: color-mix(in srgb, var(--color-text-primary) 26%, transparent);
+  --nf-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+
   min-height: 100vh;
+  background: var(--color-surface-base);
+  color: var(--nf-ink);
   display: flex;
   flex-direction: column;
+}
+
+/* ---- Top rail ---- */
+.nf__rail {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 24px;
-  text-align: center;
-  color: var(--color-text-primary);
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px var(--nf-gutter);
+  border-bottom: 1px solid var(--nf-rule);
+  font-family: var(--nf-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--nf-muted);
 }
 
-.not-found__code {
-  font-size: 64px;
-  font-weight: 800;
-  color: var(--color-text-inverse);
-  line-height: 1;
-}
-
-.not-found__title {
-  font-size: var(--font-size-3xl);
-  font-weight: 700;
-}
-
-.not-found__text {
-  max-width: 420px;
-  color: var(--color-text-tertiary);
-}
-
-.not-found__btn {
-  margin-top: 8px;
-  padding: 10px 20px;
-  border-radius: var(--radius-sm);
-  background: var(--color-text-inverse);
-  color: #fff;
-  font-weight: 700;
-}
-
-.not-found__btn:hover {
+.nf__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
   text-decoration: none;
-  filter: brightness(1.1);
+}
+
+.nf__back:hover {
+  color: var(--nf-ink);
+  text-decoration: none;
+}
+
+.nf__back svg {
+  width: 13px;
+  height: 13px;
+  transition: transform 160ms ease;
+}
+
+.nf__back:hover svg {
+  transform: translateX(-3px);
+}
+
+.nf__status {
+  color: var(--nf-ink);
+}
+
+/* ---- Request line ---- */
+.nf__main {
+  flex: 1;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: clamp(40px, 8vh, 88px) var(--nf-gutter) 96px;
+}
+
+.nf__request {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.nf__method {
+  font-family: var(--nf-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--nf-muted);
+}
+
+/* The attempted path is the most useful thing on the page, so it gets the
+   size - not the word "404", which the visitor already knows. */
+.nf__path {
+  font-family: var(--nf-mono);
+  font-size: clamp(1.15rem, 3.4vw, 1.9rem);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  word-break: break-all;
+}
+
+.nf__lede {
+  margin: 0 0 clamp(32px, 5vh, 52px);
+  max-width: 56ch;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--nf-muted);
+  text-wrap: pretty;
+}
+
+/* ---- Field table ---- */
+.nf__fields {
+  margin: 0;
+  border-top: 1px solid var(--nf-rule);
+}
+
+.nf__field {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 4px 20px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--nf-rule);
+  align-items: baseline;
+}
+
+@media (max-width: 560px) {
+  .nf__field {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.nf__field dt {
+  font-family: var(--nf-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--nf-muted);
+}
+
+.nf__field dd {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--nf-ink) 84%, transparent);
+}
+
+.nf__code {
+  font-family: var(--nf-mono);
+  font-size: 13px;
+  color: var(--nf-ink);
+}
+
+/* ---- Route ledger: the actual recovery path ---- */
+.nf__section-title {
+  margin: clamp(40px, 6vh, 64px) 0 0;
+  font-family: var(--nf-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--nf-muted);
+}
+
+.nf__routes {
+  margin-top: 14px;
+  border-top: 1px solid var(--nf-rule);
+}
+
+.nf__route {
+  display: grid;
+  grid-template-columns: minmax(0, 210px) 150px minmax(0, 1fr);
+  gap: 4px 24px;
+  align-items: baseline;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--nf-rule);
+  text-decoration: none;
+  transition: background 140ms ease;
+}
+
+.nf__route:hover {
+  background: color-mix(in srgb, var(--color-text-primary) 4%, transparent);
+  text-decoration: none;
+}
+
+@media (max-width: 720px) {
+  .nf__route {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+}
+
+.nf__route-path {
+  font-family: var(--nf-mono);
+  font-size: 13px;
+  color: var(--nf-ink);
+  word-break: break-all;
+}
+
+.nf__route-label {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--nf-ink);
+}
+
+.nf__route-desc {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--nf-muted);
+  text-wrap: pretty;
+}
+
+.nf__lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 8px;
+  font-family: var(--nf-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--nf-muted);
+  vertical-align: middle;
+}
+
+.nf__lock svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* ---- Footer ---- */
+.nf__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px var(--nf-gutter);
+  border-top: 1px solid var(--nf-rule);
+  font-family: var(--nf-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--nf-muted);
+}
+
+.nf__home {
+  color: var(--nf-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--nf-rule-strong);
+  padding-bottom: 2px;
+}
+
+.nf__home:hover {
+  text-decoration: none;
+  border-bottom-color: var(--nf-ink);
+}
+
+.nf__back:focus-visible,
+.nf__route:focus-visible,
+.nf__home:focus-visible {
+  outline: 2px solid var(--nf-ink);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nf__back svg,
+  .nf__route {
+    transition: none;
+  }
 }
