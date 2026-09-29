@@ -40,4 +40,4 @@ export const authratelimit = beforeUserSignedIn(async (event) => {
   if (!email) return;
   await checkBucket('email:' + hashKey(email));
 });
-export * from './bots';
+
