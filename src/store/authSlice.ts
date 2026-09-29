@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { AuthState, User } from '../types';
+import { consumeBucket, emailKey, rateLimitMessage, LOGIN_BUCKET, SIGNUP_BUCKET, SOCIAL_BUCKET, RESET_BUCKET } from '../utils/tokenBucket';
 import {
   signInWithEmail as signInWithEmailService,
   signUpWithEmail as signUpWithEmailService,
@@ -32,6 +33,8 @@ const initialState: AuthState = {
 export const signInWithEmail = createAsyncThunk<User, SignInPayload, { rejectValue: string }>(
   'auth/signInWithEmail',
   async (payload, { rejectWithValue }) => {
+    const r = consumeBucket(emailKey('ratelimit:auth:email:', payload.email), LOGIN_BUCKET);
+    if (!r.allowed) return rejectWithValue(rateLimitMessage(r.retryAfterSec));
     try {
       return await signInWithEmailService(payload);
     } catch (error) {
@@ -43,6 +46,8 @@ export const signInWithEmail = createAsyncThunk<User, SignInPayload, { rejectVal
 export const signUpWithEmail = createAsyncThunk<User, SignUpPayload, { rejectValue: string }>(
   'auth/signUpWithEmail',
   async (payload, { rejectWithValue }) => {
+    const r = consumeBucket(emailKey('ratelimit:auth:email:', payload.email), SIGNUP_BUCKET);
+    if (!r.allowed) return rejectWithValue(rateLimitMessage(r.retryAfterSec));
     try {
       return await signUpWithEmailService(payload);
     } catch (error) {
@@ -54,6 +59,8 @@ export const signUpWithEmail = createAsyncThunk<User, SignUpPayload, { rejectVal
 export const signInWithSocialProvider = createAsyncThunk<User, SocialProviderId, { rejectValue: string }>(
   'auth/signInWithSocialProvider',
   async (providerId, { rejectWithValue }) => {
+    const r = consumeBucket('ratelimit:auth:social:' + providerId, SOCIAL_BUCKET);
+    if (!r.allowed) return rejectWithValue(rateLimitMessage(r.retryAfterSec));
     try {
       return await signInWithSocialProviderService(providerId);
     } catch (error) {
@@ -65,6 +72,8 @@ export const signInWithSocialProvider = createAsyncThunk<User, SocialProviderId,
 export const sendPasswordReset = createAsyncThunk<void, string, { rejectValue: string }>(
   'auth/sendPasswordReset',
   async (email, { rejectWithValue }) => {
+    const r = consumeBucket(emailKey('ratelimit:auth:reset:', email), RESET_BUCKET);
+    if (!r.allowed) return rejectWithValue(rateLimitMessage(r.retryAfterSec));
     try {
       await sendPasswordResetService(email);
     } catch (error) {

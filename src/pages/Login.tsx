@@ -9,6 +9,16 @@ import {
   clearAuthError,
 } from '../store/authSlice';
 import { addNotification } from '../store/uiSlice';
+import {
+  consumeBucket,
+  emailKey,
+  rateLimitMessage,
+  LOGIN_BUCKET,
+  SIGNUP_BUCKET,
+  SOCIAL_BUCKET,
+  RESET_BUCKET,
+  GLOBAL_AUTH_BUCKET,
+} from '../utils/tokenBucket';
 import { LoginPage, type AuthMode } from '../components/ui/sign-in-page';
 
 const Login = () => {
@@ -48,8 +58,23 @@ const Login = () => {
     [dispatch, navigate, resolveRedirect]
   );
 
+  const checkLimit = useCallback(
+    (key: string, bucket: { capacity: number; refillIntervalMs: number }) => {
+      const r = consumeBucket(key, bucket);
+      if (!r.allowed) {
+        const msg = rateLimitMessage(r.retryAfterSec);
+        dispatch(addNotification({ type: 'error', message: msg }));
+        throw new Error(msg);
+      }
+    },
+    [dispatch]
+  );
+
   const handleEmailAuth = useCallback(
     async (mode: AuthMode, formData: { email: string; password: string; displayName: string }) => {
+      const bucket = mode === 'signup' ? SIGNUP_BUCKET : LOGIN_BUCKET;
+      checkLimit(emailKey('ratelimit:auth:email:', formData.email), bucket);
+      checkLimit('ratelimit:auth:global', GLOBAL_AUTH_BUCKET);
       const action =
         mode === 'signup'
           ? signUpWithEmail({ email: formData.email, password: formData.password, displayName: formData.displayName })
@@ -62,11 +87,13 @@ const Login = () => {
         mode === 'signup' ? `Welcome, ${result.displayName}!` : `Welcome back, ${result.displayName}!`
       );
     },
-    [dispatch, completeAuth]
+    [dispatch, completeAuth, checkLimit]
   );
 
   const handleSocialAuth = useCallback(
     async (provider: 'google' | 'github' | 'apple') => {
+      checkLimit('ratelimit:auth:social:' + provider, SOCIAL_BUCKET);
+      checkLimit('ratelimit:auth:global', GLOBAL_AUTH_BUCKET);
       const result = await dispatch(signInWithSocialProvider(provider)).unwrap();
       completeAuth(`Signed in as ${result.displayName}`);
     },
@@ -75,9 +102,10 @@ const Login = () => {
 
   const handleForgotPassword = useCallback(
     async (email: string) => {
+      checkLimit(emailKey('ratelimit:auth:reset:', email), RESET_BUCKET);
       await dispatch(sendPasswordReset(email)).unwrap();
     },
-    [dispatch]
+    [dispatch, checkLimit]
   );
 
   // Drop any stale error when the page mounts or unmounts, so a failure from
