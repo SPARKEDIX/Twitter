@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { Notification } from '../types';
-import { mockNotifications } from '../utils/mockData';
+// Real-only mode: no seeded notifications.
 
 /**
  * Activity notifications (likes, follows, mentions, ...).
@@ -16,7 +16,7 @@ interface ActivityState {
 }
 
 const initialState: ActivityState = {
-  items: mockNotifications,
+  items: [],
 };
 
 const activitySlice = createSlice({

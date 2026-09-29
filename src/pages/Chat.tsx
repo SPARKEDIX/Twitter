@@ -1,7 +1,10 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { mockConversations, mockMessages } from '../utils/mockData';
+import type { Conversation, Message } from '../types';
+// Real-only mode: mock chats removed. Conversations load from Firestore when implemented.
+const mockConversations: Conversation[] = [];
+const mockMessages: Record<string, Message[]> = {};
 import { formatDate, generateId } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
 import type { Conversation, Message } from '../types';

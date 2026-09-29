@@ -1,7 +1,11 @@
 ﻿import { useState, useMemo } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { mockTrendingTopics, mockCategories, mockRecommendedUsers } from '../utils/mockData';
+import type { TrendingTopic } from '../types';
+// Real-only mode: mock discovery removed until real trending/users exist.
+const mockTrendingTopics: TrendingTopic[] = [];
+const mockRecommendedUsers: import('../types').SuggestedUser[] = [];
+const mockCategories: Record<string, import('../types').CategoryTopic[]> = {};
 import { formatCount } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
 import type { CategoryTopic, SuggestedUser, TrendingTopic } from '../types';

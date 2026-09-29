@@ -5,7 +5,7 @@ import { setSidebarOpen, addNotification } from '../store/uiSlice';
 import { signOutUser } from '../store/authSlice';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useMediaQuery, MOBILE_BREAKPOINT } from '../hooks/useMobile';
-import { mockUser } from '../utils/mockData';
+// Real user only: mockUser removed.
 import { classNames } from '../utils/helpers';
 import './Sidebar.css';
 import GatedImage from '../components/GatedImage'
@@ -89,7 +89,7 @@ const Sidebar = () => {
   };
 
   // Single source of truth; previously hardcoded as '/profile/rankmandi'.
-  const profilePath = `/profile/${currentUser?.username ?? mockUser.username}`;
+  const profilePath = currentUser?.username ? `/profile/${currentUser.username}` : '/login';
 
   const isProfileActive = () => location.pathname.startsWith('/profile/');
 
@@ -169,13 +169,13 @@ const Sidebar = () => {
           </button>
           <div className="sidebar__user">
             <GatedImage
-              src={currentUser?.avatar ?? mockUser.avatar}
+              src={currentUser?.avatar ?? 'https://via.placeholder.com/150'}
               alt=""
               className="sidebar__avatar"
             />
             <div className="sidebar__user-info">
-              <span className="sidebar__user-name">{currentUser?.displayName ?? mockUser.displayName}</span>
-              <span className="sidebar__user-handle">@{currentUser?.username ?? mockUser.username}</span>
+              <span className="sidebar__user-name">{currentUser?.displayName ?? 'Guest'}</span>
+              <span className="sidebar__user-handle">@{currentUser?.username ?? 'guest'}</span>
             </div>
             <button
               type="button"

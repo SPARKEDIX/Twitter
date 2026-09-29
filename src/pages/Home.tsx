@@ -5,7 +5,7 @@ import Tweet from '../components/Tweet';
 import TweetComposer from '../components/TweetComposer';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { mockTweets } from '../utils/mockData';
+// Real feed only: mocks removed. Tweets come from Firestore.
 import { useMobile } from '../hooks/useMobile';
 import './Home.css';
 
@@ -24,7 +24,7 @@ const Home = () => {
     const outerTimer = setTimeout(() => {
       dispatch(fetchTweetsStart());
       innerTimer = setTimeout(() => {
-        dispatch(fetchTweetsSuccess({ tweets: mockTweets, cursor: null, hasMore: false }));
+        dispatch(fetchTweetsSuccess({ tweets: [], cursor: null, hasMore: false }));
       }, 500);
     }, 2000);
 
