@@ -29,5 +29,24 @@ service cloud.firestore {
         allow update, delete: if false;
       }
     }
+
+    // Public feed: read social, create own. Bots write via Admin SDK (bypasses rules).
+    match /tweets/{tweetId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 500;
+      allow update, delete: if false;
+    }
+
+    // Bot scheduler state: server only.
+    match /botState/{botId} {
+      allow read, write: if false;
+    }
+    match /authRateLimits/{docId} {
+      allow read, write: if false;
+    }
   }
 }

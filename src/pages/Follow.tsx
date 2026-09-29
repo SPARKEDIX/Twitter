@@ -1,7 +1,10 @@
 ﻿import { useState, useMemo, type MouseEvent } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { mockFollowSuggestions, mockRecommendedUsers } from '../utils/mockData';
+// Real-only: mock suggestions removed.
+import type { FollowSuggestion as _FS, SuggestedUser as _SU } from '../types';
+const mockFollowSuggestions: _FS[] = [];
+const mockRecommendedUsers: _SU[] = [];
 import { formatCount } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
 import type { FollowSuggestion, SuggestedUser } from '../types';

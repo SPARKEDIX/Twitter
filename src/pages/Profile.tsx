@@ -4,13 +4,20 @@ import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Tweet from '../components/Tweet';
 import TweetComposer from '../components/TweetComposer';
-import {
-  mockProfileUser,
-  mockProfileTweets,
-  mockProfileMedia,
-  mockProfileLikes,
-  mockProfileDirectory,
-} from '../utils/mockData';
+// Real-only: mock profile data removed.
+// Fake users/chats deleted. Shows real current user or empty state.
+import type { ProfileUser as _PU } from '../types';
+const mockProfileDirectory: _PU[] = [];
+const mockProfileUser: _PU = {
+  id: 'unknown', username: 'unknown', displayName: 'Unknown user',
+  avatar: 'https://via.placeholder.com/150', banner: '', verified: false,
+  bio: 'This account does not exist yet. Only real users are shown.',
+  location: '', website: '', joinDate: new Date().toISOString(),
+  followersCount: 0, followingCount: 0, tweetsCount: 0, mediaCount: 0, likesCount: 0,
+};
+const mockProfileTweets: import('../types').ProfileTweet[] = [];
+const mockProfileMedia: import('../types').ProfileTweet[] = [];
+const mockProfileLikes: import('../types').LikedTweet[] = [];
 import { formatCount, formatDate } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
 import type { LikedTweet, ProfileUser, ProfileTweet } from '../types';
