@@ -1,26 +1,33 @@
 rules_version = '2';
 
-// Firestore security rules for the user-profile documents the auth backend
-// creates on first sign-in.
-//
+// Firestore security rules: profiles + private login events.
 // Deploy with:
 //   firebase deploy --only firestore:rules
-//
-// NOTE: these are the rules the app assumes. The client already degrades
-// gracefully when they are absent (see `loadUserProfile` in
-// src/services/authService.ts), so nothing breaks - you just get a profile
-// derived from the Firebase user record instead of a persisted one.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // A user may read and write only their own profile. Everyone signed in
-    // may read other users' profiles so the app can render author cards.
+    // Profiles: signed-in can read for author cards, owner can create/update.
     match /users/{userId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.auth.uid == userId;
       allow update: if request.auth != null && request.auth.uid == userId;
-      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false;
+
+      // Login events: owner-only, create-only, validated.
+      match /logins/{loginId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.uid == userId
+          && request.resource.data.keys().hasOnly(['uid', 'email', 'time', 'ip', 'userAgent', 'platform'])
+          && request.resource.data.time is timestamp
+          && (!('email' in request.resource.data) || request.resource.data.email is string || request.resource.data.email == null)
+          && (!('ip' in request.resource.data) || request.resource.data.ip is string || request.resource.data.ip == null)
+          && (!('userAgent' in request.resource.data) || request.resource.data.userAgent is string || request.resource.data.userAgent == null)
+          && (!('platform' in request.resource.data) || request.resource.data.platform is string || request.resource.data.platform == null);
+        allow update, delete: if false;
+      }
     }
   }
 }

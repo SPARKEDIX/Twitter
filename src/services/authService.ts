@@ -13,6 +13,7 @@ import {
   type AuthProvider,
 } from 'firebase/auth';
 import { auth, firebaseApp } from '../lib/firebase';
+import { logLoginEvent } from './loginLogger';
 import type { User } from '../types';
 
 /**
@@ -186,7 +187,9 @@ const reloadUser = (fbUser: FirebaseUser): Promise<void> =>
 
 const resolveUser = async (credential: { user: FirebaseUser }): Promise<User> => {
   await reloadUser(credential.user);
-  return loadUserProfile(credential.user);
+  const appUser = await loadUserProfile(credential.user);
+  void logLoginEvent(credential.user);
+  return appUser;
 };
 
 export const signInWithEmail = async ({ email, password }: SignInPayload): Promise<User> => {
