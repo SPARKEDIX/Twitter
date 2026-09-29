@@ -1,28 +1,16 @@
-/**
- * Bot directory (client-safe).
- * Secret BOT_API_KEY never touches the browser - generation runs in Cloud Functions.
- * Client only reads real + bot tweets from Firestore and checks the 500-user gate.
- */
-export interface BotProfile {
-  id: string;
-  username: string;
-  displayName: string;
-  taste: string;
-  queries: string[];
-  offsetMin: number;
-}
+export interface BotProfile { id: string; username: string; displayName: string; taste: string; offsetMin: number }
 
 export const BOTS: BotProfile[] = [
-  { id: 'bot_01', username: 'ai_desi', displayName: 'AI Desi', taste: 'Hindi + English AI tools, coding, startups', queries: ['generative AI coding tools', 'small language models'], offsetMin: 0 },
-  { id: 'bot_02', username: 'antariskh', displayName: 'Antariksh', taste: 'space, ISRO, NASA, rockets', queries: ['ISRO latest launch', 'NASA Artemis news'], offsetMin: 42 },
-  { id: 'bot_03', username: 'cricaddaa', displayName: 'CricAdda', taste: 'cricket, IPL, stats, Hinglish banter', queries: ['IPL latest news', 'India cricket score'], offsetMin: 84 },
-  { id: 'bot_04', username: 'paisapoint', displayName: 'Paisa Point', taste: 'personal finance India, UPI, mutual funds', queries: ['RBI repo rate news', 'Nifty sensex today'], offsetMin: 126 },
-  { id: 'bot_05', username: 'designdalaan', displayName: 'Design Dalaan', taste: 'UI/UX, typography, minimal web design', queries: ['web design trends 2026', 'typography inspiration'], offsetMin: 168 },
-  { id: 'bot_06', username: 'filmykeeda', displayName: 'Filmy Keeda', taste: 'Bollywood + world cinema, reviews, no spoilers', queries: ['Bollywood box office news', 'best films 2026'], offsetMin: 210 },
-  { id: 'bot_07', username: 'surtaal', displayName: 'Sur Taal', taste: 'music: Bollywood, indie, lo-fi, AR Rahman', queries: ['new indie music India', 'AR Rahman concert'], offsetMin: 252 },
-  { id: 'bot_08', username: 'yatrigyaan', displayName: 'Yatri Gyaan', taste: 'budget travel India, trains, hidden places', queries: ['budget travel India places', 'Vande Bharat new routes'], offsetMin: 294 },
-  { id: 'bot_09', username: 'swaadlab', displayName: 'Swaad Lab', taste: 'street food, recipes, chai, regional dishes', queries: ['Indian street food recipes', 'best chai spots Delhi'], offsetMin: 336 },
-  { id: 'bot_10', username: 'pixelkhel', displayName: 'Pixel Khel', taste: 'gaming India: BGMI, Valorant, mobile esports', queries: ['BGMI tournament news', 'Valorant patch notes'], offsetMin: 378 },
+  { id: 'bot_01', username: 'ai_desi', displayName: 'AI Desi', taste: 'AI tools, coding, startups', offsetMin: 0 },
+  { id: 'bot_02', username: 'antariskh', displayName: 'Antariksh', taste: 'space, ISRO, NASA', offsetMin: 42 },
+  { id: 'bot_03', username: 'cricaddaa', displayName: 'CricAdda', taste: 'cricket, IPL', offsetMin: 84 },
+  { id: 'bot_04', username: 'paisapoint', displayName: 'Paisa Point', taste: 'finance India, UPI', offsetMin: 126 },
+  { id: 'bot_05', username: 'designdalaan', displayName: 'Design Dalaan', taste: 'UI/UX design', offsetMin: 168 },
+  { id: 'bot_06', username: 'filmykeeda', displayName: 'Filmy Keeda', taste: 'cinema, no spoilers', offsetMin: 210 },
+  { id: 'bot_07', username: 'surtaal', displayName: 'Sur Taal', taste: 'music', offsetMin: 252 },
+  { id: 'bot_08', username: 'yatrigyaan', displayName: 'Yatri Gyaan', taste: 'budget travel India', offsetMin: 294 },
+  { id: 'bot_09', username: 'swaadlab', displayName: 'Swaad Lab', taste: 'street food, chai', offsetMin: 336 },
+  { id: 'bot_10', username: 'pixelkhel', displayName: 'Pixel Khel', taste: 'gaming India', offsetMin: 378 },
 ];
 
 export const BOT_INTERVAL_MS = 7 * 60 * 60 * 1000;
@@ -41,4 +29,36 @@ export function shouldUseBot(realUserCount: number | null): boolean {
 
 export function isBotUsername(username: string): boolean {
   return BOTS.some((b) => b.username === username);
+}
+
+function lastKey(id: string): string { return 'bot:lastTweet:' + id; }
+function getLast(id: string): number { try { return Number(localStorage.getItem(lastKey(id)) || 0); } catch { return 0; } }
+function setLast(id: string, t: number): void { try { localStorage.setItem(lastKey(id), String(t)); } catch { /* ignore */ } }
+
+async function tickBot(bot: BotProfile): Promise<void> {
+  const now = Date.now();
+  if (now - getLast(bot.id) < BOT_INTERVAL_MS) return;
+  try {
+    const r = await fetch('/api/bot-tweet?botId=' + bot.id);
+    if (!r.ok) return;
+    const j = (await r.json()) as { text?: string };
+    if (!j.text) return;
+    const firestore = await import('firebase/firestore');
+    const lib = await import('../lib/firebase');
+    await firestore.addDoc(firestore.collection(firestore.getFirestore(lib.firebaseApp), 'tweets'), { authorId: bot.id, authorUsername: bot.username, authorName: bot.displayName, content: j.text.slice(0, 280), createdAt: firestore.serverTimestamp(), likesCount: 0, retweetsCount: 0, repliesCount: 0, bot: true, taste: bot.taste });
+    setLast(bot.id, now);
+  } catch (e) { console.warn('[bots] tick failed for ' + bot.id, e); }
+}
+
+export function startBotEngine(realUserCount: number | null): () => void {
+  if (!shouldUseBot(realUserCount)) return () => undefined;
+  const now = Date.now();
+  const timers: number[] = [];
+  for (const bot of BOTS) {
+    if (now - getLast(bot.id) >= BOT_INTERVAL_MS) {
+      timers.push(window.setTimeout(() => { void tickBot(bot); }, Math.min(bot.offsetMin * 60 * 1000, BOT_INTERVAL_MS)));
+    }
+  }
+  const iv = window.setInterval(() => { if (!botEnabled()) return; for (const bot of BOTS) void tickBot(bot); }, 15 * 60 * 1000);
+  return () => { timers.forEach((t) => clearTimeout(t)); clearInterval(iv); };
 }
