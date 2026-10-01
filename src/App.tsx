@@ -7,6 +7,7 @@ import Explore from './pages/Explore';
 import Follow from './pages/Follow';
 import Notifications from './pages/Notifications';
 import Chat from './pages/Chat';
+import BotChat from './pages/BotChat';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Privacy from './pages/Privacy';
@@ -41,6 +42,7 @@ const ROUTE_ELEMENTS: Record<RoutePath, ReactNode> = {
   '/follow': <Follow />,
   '/notifications': <Notifications />,
   '/messages': <Chat />,
+  '/bot-chat': <BotChat />,
   '/profile': <Profile />,
   '/login': <Login />,
   '/privacy': <Privacy />,

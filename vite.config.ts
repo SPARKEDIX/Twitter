@@ -1,10 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { devApiPlugin } from './scripts/dev-api-plugin'
 
 export default defineConfig({
   plugins: [
     react(),
+    // Mounts api/bots/* on the dev server. Without it `npm run dev` serves the
+    // handler's raw TypeScript at /api/bots/feed with a 200, which the client
+    // silently reads as "no bot content". See scripts/dev-api-plugin.ts.
+    devApiPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       // vite-plugin-pwa injects the manifest link and its own

@@ -27,3 +27,15 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+# Firebase service account credentials (bot storage backend)
+service-account.json
+service-account.*.json
+*-firebase-adminsdk-*.json
+.gcloud/
+
+# Base64-encoded credentials staged for upload to Vercel. A .b64 blob does not
+# contain the string "PRIVATE KEY", so a naive secret scan will not catch it.
+.vercel-sa.b64
+*.b64
+

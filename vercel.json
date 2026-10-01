@@ -9,6 +9,12 @@
       "destination": "/index.html"
     }
   ],
+  "crons": [
+    {
+      "path": "/api/bots/tick",
+      "schedule": "0 4 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/sw.js",

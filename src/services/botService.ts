@@ -1,64 +1,168 @@
-export interface BotProfile { id: string; username: string; displayName: string; taste: string; offsetMin: number }
+/**
+ * Client for the bot engine.
+ *
+ * The engine itself lives in `api/` and runs server-side, so this module only
+ * reads what the bots produced. That split is deliberate:
+ *
+ *   - The provider key never enters the browser bundle.
+ *   - Content keeps generating when no user has the app open.
+ *   - `BOTS` (the roster) is still imported from shared config because the UI
+ *     needs to render avatars and names for any tweet or thread it receives.
+ *
+ * Every call degrades quietly: bots are background colour, and a failed request
+ * must never break the timeline or the messages page.
+ */
 
-export const BOTS: BotProfile[] = [
-  { id: 'bot_01', username: 'ai_desi', displayName: 'AI Desi', taste: 'AI tools, coding, startups', offsetMin: 0 },
-  { id: 'bot_02', username: 'antariskh', displayName: 'Antariksh', taste: 'space, ISRO, NASA', offsetMin: 42 },
-  { id: 'bot_03', username: 'cricaddaa', displayName: 'CricAdda', taste: 'cricket, IPL', offsetMin: 84 },
-  { id: 'bot_04', username: 'paisapoint', displayName: 'Paisa Point', taste: 'finance India, UPI', offsetMin: 126 },
-  { id: 'bot_05', username: 'designdalaan', displayName: 'Design Dalaan', taste: 'UI/UX design', offsetMin: 168 },
-  { id: 'bot_06', username: 'filmykeeda', displayName: 'Filmy Keeda', taste: 'cinema, no spoilers', offsetMin: 210 },
-  { id: 'bot_07', username: 'surtaal', displayName: 'Sur Taal', taste: 'music', offsetMin: 252 },
-  { id: 'bot_08', username: 'yatrigyaan', displayName: 'Yatri Gyaan', taste: 'budget travel India', offsetMin: 294 },
-  { id: 'bot_09', username: 'swaadlab', displayName: 'Swaad Lab', taste: 'street food, chai', offsetMin: 336 },
-  { id: 'bot_10', username: 'pixelkhel', displayName: 'Pixel Khel', taste: 'gaming India', offsetMin: 378 },
-];
+import { BOTS, getBot } from '../config/bots';
+import type { Conversation, Message, User } from '../types';
 
-export const BOT_INTERVAL_MS = 7 * 60 * 60 * 1000;
-export const REAL_USER_TARGET = 500;
-
-export function botEnabled(): boolean {
-  try { return (import.meta.env.VITE_BOT_ENABLED as string | undefined) === 'true'; }
-  catch { return false; }
+/** A bot tweet as returned by `/api/bots/feed`. */
+export interface BotTweetDto {
+  id: string;
+  content: string;
+  createdAt: string;
+  topic: string;
+  sources: string[];
+  bot: {
+    id: string;
+    username: string;
+    displayName: string;
+    bio: string;
+    verified: boolean;
+    avatar: string;
+  } | null;
 }
 
-export function shouldUseBot(realUserCount: number | null): boolean {
-  if (!botEnabled()) return false;
-  if (realUserCount == null) return false;
-  return realUserCount < REAL_USER_TARGET;
+/** A bot thread as returned by `/api/bots/conversations`. */
+export interface BotConversationDto {
+  id: string;
+  updatedAt: string;
+  participants: Array<{
+    id: string;
+    username: string;
+    displayName: string;
+    avatar: string;
+    verified: boolean;
+  }>;
+  messages: Array<{ id: string; botId: string; text: string; createdAt: string }>;
 }
 
-export function isBotUsername(username: string): boolean {
-  return BOTS.some((b) => b.username === username);
-}
+/** Read timeout for the read-only endpoints. */
+const READ_TIMEOUT_MS = 10_000;
 
-function lastKey(id: string): string { return 'bot:lastTweet:' + id; }
-function getLast(id: string): number { try { return Number(localStorage.getItem(lastKey(id)) || 0); } catch { return 0; } }
-function setLast(id: string, t: number): void { try { localStorage.setItem(lastKey(id), String(t)); } catch { /* ignore */ } }
+/** GETs JSON with a timeout. @returns `null` on any failure. */
+async function getJson<T>(path: string): Promise<T | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), READ_TIMEOUT_MS);
 
-async function tickBot(bot: BotProfile): Promise<void> {
-  const now = Date.now();
-  if (now - getLast(bot.id) < BOT_INTERVAL_MS) return;
   try {
-    const r = await fetch('/api/bot-tweet?botId=' + bot.id);
-    if (!r.ok) return;
-    const j = (await r.json()) as { text?: string };
-    if (!j.text) return;
-    const firestore = await import('firebase/firestore');
-    const lib = await import('../lib/firebase');
-    await firestore.addDoc(firestore.collection(firestore.getFirestore(lib.firebaseApp), 'tweets'), { authorId: bot.id, authorUsername: bot.username, authorName: bot.displayName, content: j.text.slice(0, 280), createdAt: firestore.serverTimestamp(), likesCount: 0, retweetsCount: 0, repliesCount: 0, bot: true, taste: bot.taste });
-    setLast(bot.id, now);
-  } catch (e) { console.warn('[bots] tick failed for ' + bot.id, e); }
+    const response = await fetch(path, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
-export function startBotEngine(realUserCount: number | null): () => void {
-  if (!shouldUseBot(realUserCount)) return () => undefined;
-  const now = Date.now();
-  const timers: number[] = [];
-  for (const bot of BOTS) {
-    if (now - getLast(bot.id) >= BOT_INTERVAL_MS) {
-      timers.push(window.setTimeout(() => { void tickBot(bot); }, Math.min(bot.offsetMin * 60 * 1000, BOT_INTERVAL_MS)));
-    }
-  }
-  const iv = window.setInterval(() => { if (!botEnabled()) return; for (const bot of BOTS) void tickBot(bot); }, 15 * 60 * 1000);
-  return () => { timers.forEach((t) => clearTimeout(t)); clearInterval(iv); };
+/** Fetches the latest bot tweets, newest first. */
+export async function fetchBotFeed(limit = 30): Promise<BotTweetDto[]> {
+  const payload = await getJson<{ tweets?: BotTweetDto[] }>(`/api/bots/feed?limit=${limit}`);
+  return payload?.tweets ?? [];
 }
+
+/** Fetches the latest bot-to-bot threads. */
+export async function fetchBotConversations(limit = 20): Promise<BotConversationDto[]> {
+  const payload = await getJson<{ conversations?: BotConversationDto[] }>(
+    `/api/bots/conversations?limit=${limit}`
+  );
+  return payload?.conversations ?? [];
+}
+
+/** Builds the UI `User` for a bot. */
+function toUser(bot: NonNullable<BotTweetDto['bot']> | BotConversationDto['participants'][number]): User {
+  return {
+    id: bot.id,
+    username: bot.username,
+    displayName: bot.displayName,
+    avatar: bot.avatar,
+    verified: bot.verified,
+    bio: getBot(bot.id)?.bio,
+    followersCount: 0,
+    followingCount: 0,
+  };
+}
+
+/**
+ * Converts a bot tweet into the app's `Tweet` shape so it can drop straight
+ * into the timeline without the `Tweet` component needing to know about bots.
+ *
+ * @returns `null` if the DTO has no author, which means the roster changed out
+ * from under it and the tweet should be skipped rather than rendered broken.
+ */
+export function toTweet(dto: BotTweetDto) {
+  if (!dto.bot) return null;
+
+  return {
+    id: dto.id,
+    author: toUser(dto.bot),
+    content: dto.content,
+    createdAt: dto.createdAt,
+    likesCount: 0,
+    retweetsCount: 0,
+    repliesCount: 0,
+    isLiked: false,
+    isRetweeted: false,
+    isBookmarked: false,
+  };
+}
+
+/**
+ * Converts bot threads into the app's `Conversation` + `Message` shapes so the
+ * existing Chat page can render them with no bot-specific code.
+ *
+ * A thread becomes a conversation titled after its participants, and each bot
+ * message becomes a `Message` whose `senderId` is the bot's id — which is
+ * already how `Chat.tsx` decides left-vs-right alignment.
+ */
+export function toConversations(dtos: BotConversationDto[]): Conversation[] {
+  return dtos.map((dto) => {
+    const last = dto.messages[dto.messages.length - 1];
+
+    return {
+      id: dto.id,
+      participants: dto.participants.map(toUser),
+      lastMessage: {
+        content: last?.text ?? '',
+        senderId: last?.botId ?? '',
+        createdAt: last?.createdAt ?? dto.updatedAt,
+      },
+      unreadCount: 0,
+    };
+  });
+}
+
+/** Flattens every thread's messages, keyed by conversation id. */
+export function toMessages(dtos: BotConversationDto[]): Record<string, Message[]> {
+  const result: Record<string, Message[]> = {};
+
+  for (const dto of dtos) {
+    result[dto.id] = dto.messages.map((message) => ({
+      id: message.id,
+      conversationId: dto.id,
+      senderId: message.botId,
+      content: message.text,
+      createdAt: message.createdAt,
+      read: true,
+    }));
+  }
+
+  return result;
+}
+
+/** The roster, for rendering bot suggestion cards and profile views. */
+export { BOTS };

@@ -59,6 +59,13 @@ const LogoutIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+/** Chat bubbles — distinguishes Bot Chat from the single-icon Messages entry. */
+const BotChatIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" width="24" height="24" aria-hidden="true">
+    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-3 9H7V9h10v2zm0-4H7V5h10v2z" />
+  </svg>
+);
+
 /** Icon per route. Labels, descriptions and guards come from config/routes.ts. */
 const NAV_ICONS: Record<string, (props: { className?: string }) => ReactElement> = {
   '/': HomeIcon,
@@ -66,6 +73,7 @@ const NAV_ICONS: Record<string, (props: { className?: string }) => ReactElement>
   '/follow': PeopleIcon,
   '/notifications': BellIcon,
   '/messages': EnvelopeIcon,
+  '/bot-chat': BotChatIcon,
   '/profile': PersonIcon,
 };
 

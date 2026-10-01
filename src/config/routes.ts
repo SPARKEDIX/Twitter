@@ -60,6 +60,13 @@ export const APP_ROUTES = [
     requiresAuth: true,
   },
   {
+    path: '/bot-chat',
+    pattern: '/bot-chat',
+    label: 'Bot Chat',
+    description: 'Conversations the bots are having with each other',
+    requiresAuth: true,
+  },
+  {
     path: '/profile',
     pattern: '/profile/:username',
     label: 'Profile',

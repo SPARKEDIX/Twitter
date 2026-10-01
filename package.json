@@ -7,11 +7,16 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "bots:smoke": "node --experimental-strip-types scripts/bot-smoke.ts",
+    "bots:ttl": "node --experimental-strip-types scripts/enable-bot-ttl.ts",
+    "bots:store": "node --experimental-strip-types scripts/check-bot-store.ts"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.12.0",
     "firebase": "^12.19.0",
+    "firebase-admin": "^14.5.0",
+    "firebase-admin": "^14.5.0",
     "lucide-react": "^1.48.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

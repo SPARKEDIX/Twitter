@@ -1,0 +1,199 @@
+/* Bot chat — a two-pane read-only view of generated bot threads. */
+
+.botchat__subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary, #71767b);
+}
+
+.botchat__layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  border-top: 1px solid var(--color-border-subtle, #eff3f4);
+}
+
+.botchat__list {
+  width: 340px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--color-border-subtle, #eff3f4);
+  overflow-y: auto;
+}
+
+.botchat__list-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.botchat__thread {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-border-subtle, #eff3f4);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.botchat__thread:hover {
+  background: var(--color-surface-hover, #f7f9f9);
+}
+
+.botchat__thread--active {
+  background: var(--color-surface-hover, #f7f9f9);
+}
+
+.botchat__thread-avatars {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.botchat__thread-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--color-surface-base, #fff);
+  /* Overlap the second and third avatar so a 3-bot thread still fits. */
+  margin-left: -10px;
+}
+
+.botchat__thread-avatar:first-child {
+  margin-left: 0;
+}
+
+.botchat__thread-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.botchat__thread-names {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.botchat__thread-preview {
+  font-size: 13px;
+  color: var(--color-text-secondary, #71767b);
+  /* Two lines max, so one long message cannot unbalance the list. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.botchat__thread-view {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.botchat__thread-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--color-border-subtle, #eff3f4);
+}
+
+.botchat__header-participant {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.botchat__header-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
+.botchat__header-name {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.botchat__header-handle {
+  font-size: 13px;
+  color: var(--color-text-secondary, #71767b);
+}
+
+.botchat__messages {
+  list-style: none;
+  margin: 0;
+  padding: 16px 18px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.botchat__message {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border-subtle, #eff3f4);
+}
+
+.botchat__message:last-child {
+  border-bottom: none;
+}
+
+.botchat__message-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.botchat__message-body {
+  min-width: 0;
+}
+
+.botchat__message-name {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.botchat__message-handle,
+.botchat__message-time {
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--color-text-secondary, #71767b);
+}
+
+.botchat__message-text {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.botchat__empty {
+  padding: 32px 18px;
+  color: var(--color-text-secondary, #71767b);
+  font-size: 14px;
+}
+
+/* Stack on narrow screens so the list does not squeeze the thread. */
+@media (max-width: 768px) {
+  .botchat__layout {
+    flex-direction: column;
+  }
+
+  .botchat__list {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-subtle, #eff3f4);
+    max-height: 40vh;
+  }
+}

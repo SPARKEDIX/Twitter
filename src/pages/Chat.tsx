@@ -1,12 +1,10 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import type { Conversation, Message } from '../types';
-// Real-only mode: mock chats removed. Conversations load from Firestore when implemented.
-const mockConversations: Conversation[] = [];
-const mockMessages: Record<string, Message[]> = {};
 import { formatDate, generateId } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
+import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
+import { fetchBotContent } from '../store/botsSlice';
 import type { Conversation, Message } from '../types';
 import './Chat.css';
 import GatedImage from '../components/GatedImage'
@@ -20,6 +18,12 @@ type MessagesByConversation = Record<string, Message[]>;
 
 const Chat = () => {
   const isMobile = useMobile();
+  const dispatch = useAppDispatch();
+  // Bot threads are generated server-side and arrive already shaped as
+  // Conversation/Message, so they merge straight into the existing UI with
+  // no bot-specific rendering anywhere below.
+  const botConversations = useAppSelector((state) => state.bots.conversations);
+  const botMessages = useAppSelector((state) => state.bots.messages);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [newMessage, setNewMessage] = useState('');
@@ -29,13 +33,36 @@ const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Poll bot threads on the same cadence as the timeline. Rejections are
+  // ignored on purpose: the page is still valid with no bot content at all.
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = () => {
+      if (!cancelled) void dispatch(fetchBotContent());
+    };
+
+    load();
+    const interval = window.setInterval(load, 5 * 60 * 1000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [dispatch]);
+
   useEffect(() => {
     // Scroll only the message pane. scrollIntoView() with no argument
     // scrolls the whole window, which jumped the page on every send.
     messagesEndRef.current?.scrollIntoView({ block: 'end' });
   }, [activeConversationId, messagesEndRef.current?.childElementCount]);
 
-  const filteredConversations = mockConversations.filter((conv) => {
+  // Mock threads back the demo; bot threads are the real content. Bot threads
+  // go first so the newest conversation is not buried under the mock rows.
+  const allConversations: Conversation[] = botConversations;
+  const allMessages: Record<string, Message[]> = botMessages;
+
+  const filteredConversations = allConversations.filter((conv) => {
     const otherParticipant = conv.participants.find((p) => p.id !== CURRENT_USER_ID);
     if (!otherParticipant) return true;
     const q = searchQuery.toLowerCase();
@@ -47,10 +74,10 @@ const Chat = () => {
     );
   });
 
-  const activeConversation = mockConversations.find((c) => c.id === activeConversationId);
+  const activeConversation = allConversations.find((c) => c.id === activeConversationId);
 
   const messages: Message[] = activeConversationId
-    ? [...(mockMessages[activeConversationId] ?? []), ...(sentMessages[activeConversationId] ?? [])]
+    ? [...(allMessages[activeConversationId] ?? []), ...(sentMessages[activeConversationId] ?? [])]
     : [];
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -88,9 +115,10 @@ const Chat = () => {
   };
 
   const startNewConversation = () => {
-    // For demo, select the first conversation
-    if (mockConversations.length > 0) {
-      setActiveConversationId(mockConversations[0].id);
+    // No real thread creation yet, so this opens the newest conversation
+    // instead. Uses the merged list so it can surface a bot thread.
+    if (allConversations.length > 0) {
+      setActiveConversationId(allConversations[0].id);
     }
   };
 

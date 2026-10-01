@@ -4,6 +4,7 @@ import authReducer from './authSlice';
 import tweetsReducer from './tweetsSlice';
 import activityReducer from './activitySlice';
 import consentReducer from './consentSlice';
+import botsReducer from './botsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     tweets: tweetsReducer,
     activity: activityReducer,
     consent: consentReducer,
+    bots: botsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
