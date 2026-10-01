@@ -1,7 +1,6 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import type { TrendingTopic } from '../types';
 // Real-only mode: mock discovery removed until real trending/users exist.
 const mockTrendingTopics: TrendingTopic[] = [];
 const mockRecommendedUsers: import('../types').SuggestedUser[] = [];

@@ -1,8 +1,7 @@
-﻿import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { toggleSidebar, toggleTheme } from '../store/uiSlice';
 import { signOutUser } from '../store/authSlice';
-import { mockUser } from '../utils/mockData';
 import { NavLink, useNavigate } from 'react-router-dom';
 import './Header.css';
 import GatedImage from '../components/GatedImage'
@@ -16,9 +15,13 @@ const Header = () => {
   const unreadCount = useAppSelector((state) => state.activity.items.filter((n) => !n.read).length);
   const [query, setQuery] = useState('');
 
-  // Single source of truth. This was hardcoded as '/profile/rankmandi' in
-  // two places and never matched mockProfileUser.username.
-  const profilePath = `/profile/${currentUser?.username ?? mockUser.username}`;
+  // The mock user was removed with the rest of the seed data, so the fallback
+  // is a literal now. The route pattern needs a segment, so something has to
+  // be here even when no user is loaded.
+  // The mock user was removed with the rest of the seed data, so the fallback
+  // is a literal now. The route pattern needs a segment, so something has to
+  // be here even when no user is loaded.
+  const profilePath = `/profile/${currentUser?.username ?? 'me'}`;
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -104,7 +107,7 @@ const Header = () => {
         </button>
         <NavLink to={profilePath} className="header__profile" aria-label="View your profile">
           <GatedImage
-            src={currentUser?.avatar ?? mockUser.avatar}
+            src={currentUser?.avatar ?? ''}
             alt=""
             className="header__avatar"
           />

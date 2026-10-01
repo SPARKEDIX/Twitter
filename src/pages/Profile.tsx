@@ -1,4 +1,4 @@
-﻿import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useAppSelector } from '../hooks/useRedux';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
@@ -16,7 +16,9 @@ const mockProfileUser: _PU = {
   followersCount: 0, followingCount: 0, tweetsCount: 0, mediaCount: 0, likesCount: 0,
 };
 const mockProfileTweets: import('../types').ProfileTweet[] = [];
-const mockProfileMedia: import('../types').ProfileTweet[] = [];
+// Media is a list of image URLs, not tweets. It was annotated as
+// ProfileTweet[] by mistake, which made the src prop a type error.
+const mockProfileMedia: string[] = [];
 const mockProfileLikes: import('../types').LikedTweet[] = [];
 import { formatCount, formatDate } from '../utils/helpers';
 import { useMobile } from '../hooks/useMobile';
