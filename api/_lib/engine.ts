@@ -11,16 +11,16 @@
  * the caller as `null` so one bad bot cannot abort a whole tick.
  */
 
-import { formatContext, search, type SearchResult } from './ddg.ts';
-import { complete, LlmError } from './llm.ts';
-import { getBotStore } from './store.ts';
+import { formatContext, search, type SearchResult } from './ddg';
+import { complete, LlmError } from './llm';
+import { getBotStore } from './store';
 import {
   BOTS,
   type BotConversation,
   type BotMessage,
   type BotProfile,
   type BotTweet,
-} from '../../src/config/bots.ts';
+} from '../../src/config/bots';
 
 export const TWEET_MAX_LENGTH = 260;
 

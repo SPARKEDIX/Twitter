@@ -25,9 +25,9 @@
  * `createdAt`.
  */
 
-import { getAdminFirestore } from './firebase-admin.ts';
-import type { BotStore } from './store.ts';
-import type { BotConversation, BotMessage, BotTweet } from '../../src/config/bots.ts';
+import { getAdminFirestore } from './firebase-admin';
+import type { BotStore } from './store';
+import type { BotConversation, BotMessage, BotTweet } from '../../src/config/bots';
 
 /** How long generated content is kept. Firestore TTL removes it after this. */
 export const RETENTION_DAYS = 30;

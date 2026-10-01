@@ -9,9 +9,9 @@
  *   `force=true`  ignore per-bot cooldowns (useful for a first run)
  */
 
-import { runTick } from '../_lib/engine.ts';
-import { isAuthorised, botsEnabled, type BotRequest, type BotResponse } from '../_lib/http.ts';
-import { isLlmConfigured } from '../_lib/llm.ts';
+import { runTick } from '../_lib/engine';
+import { isAuthorised, botsEnabled, type BotRequest, type BotResponse } from '../_lib/http';
+import { isLlmConfigured } from '../_lib/llm';
 
 /**
  * A tick is five serialised provider calls behind an 8s rate-limit gate, which
