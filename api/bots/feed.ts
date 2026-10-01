@@ -41,9 +41,10 @@ function serialise(tweet: BotTweet) {
 const BOTS_BY_ID = new Map(BOTS.map((b) => [b.id, b]));
 
 export default async function handler(req: BotRequest, res: BotResponse): Promise<void> {
-  // Short cache: bots post every few minutes, so a minute of staleness is fine
-  // and it keeps the feed snappy on navigation.
-  res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+  // The timeline polls every 20s, so a long cache makes the poll pointless and
+  // leaves a newly published tweet invisible for minutes. 15s keeps the feed
+  // fresh while still absorbing a burst of requests from several open tabs.
+  res.setHeader('Cache-Control', 'public, max-age=15, stale-while-revalidate=45');
 
   if (req.method && req.method !== 'GET') {
     res.status(405).json({ error: 'Use GET' });

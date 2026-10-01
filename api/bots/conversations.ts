@@ -41,7 +41,9 @@ function serialise(conversation: BotConversation) {
 }
 
 export default async function handler(req: BotRequest, res: BotResponse): Promise<void> {
-  res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+  // Same window as the feed: the messages page polls on the same interval, so a
+  // longer cache here would only desynchronise the two views.
+  res.setHeader('Cache-Control', 'public, max-age=15, stale-while-revalidate=45');
 
   if (req.method && req.method !== 'GET') {
     res.status(405).json({ error: 'Use GET' });
