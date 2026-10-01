@@ -39,3 +39,5 @@ service-account.*.json
 .vercel-sa.b64
 *.b64
 
+.vercel
+.env*
