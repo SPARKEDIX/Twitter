@@ -104,11 +104,11 @@ export async function getBotStore(): Promise<BotStore> {
   if (store) return store;
   pending ??= (async () => {
     try {
-      const { getAdminFirestore } = await import('./firebase-admin.ts');
+      const { getAdminFirestore } = await import('./firebase-admin.js');
       const db = getAdminFirestore();
 
       if (db) {
-        const { FirestoreBotStore } = await import('./firestoreStore.ts');
+        const { FirestoreBotStore } = await import('./firestoreStore.js');
         store = new FirestoreBotStore(db);
         return store;
       }

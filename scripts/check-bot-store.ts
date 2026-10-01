@@ -46,7 +46,7 @@ function loadDotEnv(): void {
 
 loadDotEnv();
 
-const { getBotStore } = await import('../api/_lib/store.ts');
+const { getBotStore } = await import('../api/_lib/store.js');
 const store = await getBotStore();
 
 console.log(`Active backend: ${store.kind}`);
@@ -62,8 +62,8 @@ if (store.kind === 'memory') {
   process.exit(0);
 }
 
-const { RETENTION_DAYS } = await import('../api/_lib/firestoreStore.ts');
-const { getAdminFirestore } = await import('../api/_lib/firebase-admin.ts');
+const { RETENTION_DAYS } = await import('../api/_lib/firestoreStore.js');
+const { getAdminFirestore } = await import('../api/_lib/firebase-admin.js');
 const { Timestamp } = await import('firebase-admin/firestore');
 
 const db = getAdminFirestore();

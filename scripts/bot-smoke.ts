@@ -51,12 +51,12 @@ function loadDotEnv(): void {
 
 loadDotEnv();
 
-const { search } = await import('../api/_lib/ddg.ts');
+const { search } = await import('../api/_lib/ddg.js');
 const { generateTweet, generateConversation, sanitiseTweet } = await import(
   '../api/_lib/engine.ts'
 );
-const { isLlmConfigured } = await import('../api/_lib/llm.ts');
-const { BOTS } = await import('../src/config/bots.ts');
+const { isLlmConfigured } = await import('../api/_lib/llm.js');
+const { BOTS } = await import('../src/config/bots.js');
 
 console.log(`Bot roster: ${BOTS.length} accounts`);
 console.log(`Provider configured: ${isLlmConfigured()}\n`);
