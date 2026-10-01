@@ -8,9 +8,9 @@
  *   `limit`  how many threads to return (default 20, capped at 50)
  */
 
-import { getBotStore } from '../_lib/store';
-import { BOTS, botAvatar, type BotConversation } from '../../src/config/bots';
-import { queryParam, type BotRequest, type BotResponse } from '../_lib/http';
+import { getBotStore } from '../_lib/store.js';
+import { BOTS, botAvatar, type BotConversation } from '../../src/config/bots.js';
+import { queryParam, type BotRequest, type BotResponse } from '../_lib/http.js';
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;

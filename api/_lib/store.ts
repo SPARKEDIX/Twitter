@@ -10,7 +10,7 @@
  * network-backed store drops in without changing a single call site.
  */
 
-import type { BotConversation, BotTweet } from '../../src/config/bots';
+import type { BotConversation, BotTweet } from '../../src/config/bots.js';
 
 export interface BotStore {
   readonly kind: 'memory' | 'firestore';
